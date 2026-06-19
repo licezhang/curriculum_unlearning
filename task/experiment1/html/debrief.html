@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="jatos.js"></script>
+    <style>
+        .debrief-form {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .question-container {
+            margin-bottom: 20px;
+        }
+        .question-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #submitDebrief {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debrief-form">
+        <h2>Experiment Debrief</h2>
+        <p>Please answer the following questions about your experience with the task.</p>
+
+        <div class="question-container">
+            <label class="question-label">Do you have any suggestions to improve the task?</label>
+            <textarea required cols="50" rows="5" id="q1"></textarea>
+        </div>
+
+        <div class="question-container">
+            <label class="question-label">What strategies did you use to categorize the first set of bees?</label>
+            <textarea required cols="50" rows="5" id="q2"></textarea>
+        </div>
+
+        <div class="question-container">
+            <label class="question-label">Did your strategy change when the bees were only on screen for a short time?</label>
+            <textarea required cols="50" rows="5" id="q3"></textarea>
+        </div>
+
+        <div class="question-container">
+            <label class="question-label">What strategies did you use to categorize the second set of bees?</label>
+            <textarea required cols="50" rows="5" id="q4"></textarea>
+        </div>
+
+        <div class="question-container">
+            <label class="question-label">Did you use any external tools (e.g., pen and paper) to solve the task? (Your payment will not be affected by this response!)</label>
+            <textarea required cols="50" rows="5" id="q5"></textarea>
+        </div>
+
+        <div class="question-container">
+            <label class="question-label">Is there anything else you would like to share with us?</label>
+            <textarea required cols="50" rows="5" id="q6"></textarea>
+        </div>
+
+        <button id="submitDebrief">Submit Responses</button>
+    </div>
+</body>
+<script>
+    document.getElementById("submitDebrief").addEventListener("click", () => {
+        // Validate that all required textareas are non-empty (trimmed)
+        const fields = ["q1","q2","q3","q4","q5","q6"];
+        for (let i = 0; i < fields.length; i++) {
+            const el = document.getElementById(fields[i]);
+            if (!el) continue;
+            if (el.value.trim() === "") {
+                alert("Please answer all questions before submitting.");
+                el.focus();
+                return;
+            }
+        }
+
+        // Disable the button to prevent double submits
+        const btn = document.getElementById("submitDebrief");
+        btn.disabled = true;
+        btn.textContent = "Submitting...";
+
+        jatos.submitResultData({
+            q1: document.getElementById("q1").value,
+            q2: document.getElementById("q2").value,
+            q3: document.getElementById("q3").value,
+            q4: document.getElementById("q4").value,
+            q5: document.getElementById("q5").value,
+            q6: document.getElementById("q6").value
+        });
+        jatos.endStudyAndRedirect("https://app.prolific.co/submissions/complete?cc=C1ORV1NA");
+    })
+</script>
+</html>

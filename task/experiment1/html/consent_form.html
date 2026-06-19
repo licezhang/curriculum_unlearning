@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="jatos.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/consent-style.css" id="consentStylesheet">
+    <title>Consent Form</title>
+</head>
+<div id="consentFormContainer">
+    <body>
+        <div class="mainContent">
+            <h2>Consent Form</h2>
+            <p>We are interested in understanding how people make decisions.  In particular, we are interested in how people use knowledge that they have gained from past experience and how they apply it to new situations.</p>
+            <p>The experiments are being conducted by Prof Christopher Summerfield of the University of Oxford, England. He and his team be contacted by e-mail on hiplab@psy.ox.ac.uk.</p>
+            <p>Please read the following as it indicates that you are giving informed consent to participate in a psychological experiment :</p>
+            <ol class="consentList">
+                <li>
+                    I confirm that I have read and understand the information sheet version 1 dated 09/03/2017 for the above study. I have had the opportunity to consider the information, ask questions and have had these answered satisfactorily.
+                </li>
+                <li>
+                    I understand that my participation is voluntary and that I am free to withdraw at any time, without giving any reason, and without any adverse consequences or academic penalty.
+                </li>
+                <li>
+                    I understand that research data collected during the study may be looked at by designated individuals from the University of Oxford where it is relevant to my taking part in this study. I give permission for these individuals to access my data.
+                </li>
+                <li>
+                    I understand that this project has been reviewed by, and received ethics clearance through, the University of Oxford Central University Research Ethics Committee.
+                </li>
+                <li>
+                    I understand who will have access to personal data provided, how the data will be stored and what will happen to the data at the end of the project.
+                </li>
+                <li>
+                    I understand how this research will be written up and published.
+                </li>
+                <li>
+                    I understand how to raise a concern or make a complaint.
+                </li>
+                <li>
+                    I am over 18 years old.
+                </li>
+                <li>
+                    I agree to take part in the above study.        
+                </li>
+            </ol>
+            <p>Click submit on the button below to proceed with the experiment</p>
+            <p>By clicking the button below you are indicating that you have read the above and understood it, and are giving your consent to participate in this experiment.</p>
+
+            <button class="proceedBtn" id = "proceedBtn">Proceed</button>
+        </div>
+    </body>
+</div>
+
+    <script>
+        document.getElementById("proceedBtn").addEventListener("click", () => {
+            jatos.startNextComponent();
+        })
+    </script>
+</html>
+

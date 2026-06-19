@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="jatos.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/consent-style.css" id="consentStylesheet">
+    <title>Information Sheet</title>
+</head>
+<div id="consentFormContainer">
+    <body>
+        <div class="mainContent">
+            <h2>Information for participants</h2>
+
+            <p>Thank you for being willing to participate in our experiment. Your contribution to our research is very valuable and we appreciate your help.</p>
+
+            <h3>Background and aims of the study </h3>
+
+            <p>Understanding how humans make decisions is a key concern in the social, behavioural and neural sciences. By exploring how humans make decisions, researchers have an opportunity to understand a range of human behaviours, such as consumer activities, voting patterns, and social interactions. Studying decisions can also provide an understanding of the basic information processing mechanisms that underlie healthy cognition and, by extension, how they are impaired in clinical disorders. Our project is geared at studying the basic information processing steps that occur when humans make judgments about sensory stimuli (visual or auditory), or how they choose among stimuli with differing economic worth. Of particular interest, we want to understand the mechanisms by which humans “commit” to a choice, how they decide when to make such a commitment, and to chart the contextual variables that influence the decisions that humans make, including factors relating to attention, memory, and motivation.</p>
+
+            <h3>Why have I been invited to take part?</h3>
+
+            <p>You have freely elected to participate in the study after viewing its availability on Prolific. Only participants over 18 years old are eligible to take part in this study.</p>
+
+            <h3>Do I have to take part?</h3>
+
+            <p>No. If you do agree to participate, you may withdraw yourself and all data associated with your participation from the study at any time, without giving reason and without penalty, by simply exiting the task.</p>
+
+            <h3>What will happen in the study?</h3>
+
+            <p>If you are happy to take part in the study, you will perform computerised tasks that involve the presentation of visual stimuli (on the computer screen) or auditory stimuli. During the task you are requested to press buttons or move a mouse cursor to make decisions about these stimuli. Typically, our tasks involve judgments about categories (e.g. is this bar tilted clockwise or counterclockwise of the vertical line?), estimation judgments (e.g. what is the average height of rectangles on the screen?), or judgments of preference (e.g. which of two economic goods do you prefer?). Occasionally we may ask you to rate your confidence (“Are you sure you were correct?”).</p>
+
+            <p>In most tasks you will receive feedback about your choice, for example by a showing the words “correct” or “incorrect” on the screen. Whether or not you will receive feedback will be clearly before you take part in the study.</p>
+
+            <p>The study should take around 40 minutes, although if you take long breaks during the study, it may take longer. You will be reimbursed for your participation at an hourly rate.</p>
+
+            <h3>Are there any potential risks in taking part?</h3>
+
+            <p>There are no risks other than those posed by everyday life. You are free to withdraw at any time.</p>
+
+            <h3>Are there any benefits in taking part?</h3>
+
+            <p>There will be no direct benefit to you from taking part in this research. However, your participation may benefit our understanding of how humans make decisions, which could inform better treatments for psychological disorders like addictive behaviour.</p>
+
+            <h3>What happens to the data provided? </h3>
+
+            <p>The research data (button presses or mouse movements, and details of your reported age and gender) will be stored confidentially on the researcher's computers. The researchers in this study have no access to personal information about you, or to other information (e.g. your browsing history).</p>
+
+            <p>Research data will be stored confidentially in password-protected documents, on designated computers. Only the research team and authorized personnel will have access to research data. All research data and records will be stored for a minimum retention period of 3 years after publication or public release of the work of the research.</p>
+
+            <h3>Will the research be published?</h3>
+
+            <p>The research may be published in international peer-reviewed journals and presented at national and international conferences. We make every effort to make our publications open-access, but this is not always possible and depends on the journal's publication policy.</p>
+
+            <p>In addition, the research may be written up as part of a student thesis. On successful submission of the thesis, it will be deposited both in print and online in the University archives, to facilitate its use in future research. The thesis will be published open access.</p>
+
+            <p>The University of Oxford is committed to the dissemination of its research for the benefit of society and the economy and, in support of this commitment, has established an online archive of research materials. This archive includes digital copies of student theses successfully submitted as part of a University of Oxford postgraduate degree programme. Holding the archive online gives easy access for researchers to the full text of freely available theses, thereby increasing the likely impact and use of that research.</p>
+
+            <h3>Who has reviewed this study?</h3>
+
+            <p>This study has been reviewed by, and received ethics clearance through, the University of Oxford Central University Research Ethics Committee (reference number: R50750/RE001).</p>
+
+            <h3>Who do I contact if I have a concern about the study or I wish to complain?</h3>
+
+            <p>If you have a concern about any aspect of this study, please speak to the relevant researcher (tel: 01865-271321; e-mail: hiplab@psy.ox.ac.uk), who will do their best to answer your query. The researcher should acknowledge your concern within 10 working days and give you an indication of how they intend to deal with it. If you remain unhappy or wish to make a formal complaint, please contact the relevant chair of the Research Ethics Committee at the University of Oxford who will seek to resolve the matter in a reasonably expeditious manner: Chair, Medical Sciences Inter-Divisional Research Ethics Committee; Email: ethics@medsci.ox.ac.uk; Address: Research Services, University of Oxford, Wellington Square, Oxford OX1 2JD</p>
+
+            <h3>Contact Details</h3>
+
+            <p>If you would like to discuss the research with someone beforehand (or if you have questions afterwards), please contact:</p>
+
+            <p>Prof. Dr. Christopher Summerfield</p>
+
+            <p>Department of Experimental Psychology</p>
+
+            <p>Tel: 01865 - 271321</p>
+
+            <p>Email: christopher.summerfield@psy.ox.ac.uk</p>
+
+            <button class="proceedBtn" id = "proceedBtn">Proceed</button>
+        </div>
+    </body>
+</div>
+
+    <script>
+        document.getElementById("proceedBtn").addEventListener("click", () => {
+            jatos.startNextComponent();
+        })
+    </script>
+</html>
