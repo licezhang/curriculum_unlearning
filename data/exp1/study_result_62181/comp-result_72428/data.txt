@@ -1,0 +1,1 @@
+{"q1":"No, it made sense","q2":"Learning via repetition. Eventually I found the ones I was getting wrong and the subtle differences between the two bugs. Was straightforward after that. ","q3":"No - maybe I was more careful","q4":"No difference. Just took my time a bit more. ","q5":"No","q6":"No thank you"}

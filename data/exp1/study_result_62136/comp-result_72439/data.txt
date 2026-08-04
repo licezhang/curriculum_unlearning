@@ -1,0 +1,1 @@
+{"q1":"Very repetative but understand its about image reconisation.","q2":"Tried to memories. prob failed though,","q3":"no","q4":"tried to recall previous right or wrong answers","q5":"no nothing","q6":"no"}

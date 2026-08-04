@@ -1,0 +1,1 @@
+{"q1":"No.","q2":"I used the patterns on each bee.","q3":"No, my strategy stayed the same.","q4":"I used the same strategy of pattern recognition.","q5":"No, I did not use any external tools.","q6":"No."}

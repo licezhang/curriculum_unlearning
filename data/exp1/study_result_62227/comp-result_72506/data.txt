@@ -1,0 +1,1 @@
+{"q1":"NA","q2":"I used critical observation of it's appearance","q3":"Somewhat","q4":" I used the previous experiment","q5":"No, only careful observation and patterns","q6":"No"}

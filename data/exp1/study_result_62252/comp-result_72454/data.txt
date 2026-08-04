@@ -1,0 +1,1 @@
+{"q1":"No.","q2":"If I spotted stars at the top, then I would know it's a good bug.","q3":"No.","q4":"If the bee had round wings and stripes on the body, then I knew that good and bad would be switched.","q5":"No.","q6":"No."}

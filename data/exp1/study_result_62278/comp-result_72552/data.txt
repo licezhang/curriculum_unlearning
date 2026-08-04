@@ -1,0 +1,1 @@
+{"q1":"Jogo interessante","q2":"observei as características e tentei guardar na memória, mas memória não é meu ponto forte","q3":"Não, apenas tentei lembrar das características ","q4":"percebi que as vezes mudava a posição de abelhas e essas eu errava","q5":"Não :D , então foi mais difícil ... ","q6":"Nao, obrigada."}

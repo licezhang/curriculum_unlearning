@@ -1,0 +1,1 @@
+{"q1":"It was great","q2":"No strategy I just followed the instructions","q3":"I did not use any strategy.","q4":"I did not use any strategy","q5":"No I did not use","q6":"Thank you."}

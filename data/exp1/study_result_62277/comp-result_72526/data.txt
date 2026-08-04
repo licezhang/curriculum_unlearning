@@ -1,0 +1,1 @@
+{"q1":"No","q2":"I remembered which were bad or good based on characteristics ","q3":"No","q4":"Remember the characteristics","q5":"No","q6":"No"}

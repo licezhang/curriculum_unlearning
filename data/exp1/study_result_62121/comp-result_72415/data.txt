@@ -1,0 +1,1 @@
+{"q1":"Less loading time in the first task between selection and moving on to the next bug.","q2":"I started with hearts or stripes and then moved onto wing numbers and then antenna shapes.","q3":"No","q4":"The same strategies that I had done previously, focus on hearts and stripes first, as I only noticed one anomaly to the pattern I was using.","q5":"No","q6":"N/A"}
