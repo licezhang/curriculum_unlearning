@@ -170,10 +170,10 @@
       stimMap = Array.from({length: numLearningBlocks}, () => buildStimMap(6, 6, catchCount));
     }
 
-    // Set up simple rule with random noise for metalearning blocks
+    // Set up metalearning stimuli: simple 1D rule or XOR
     // Assign metalearning condition randomly
     const metalearningCondition = (() => {
-      const options = ['simple_with_noise', 'xor'];
+      const options = ['simple_rule', 'xor'];
       const choice = options[Math.floor(Math.random() * options.length)];
       return choice;
     })();
@@ -203,14 +203,6 @@
       catch: false,
       task_part: 'test'
     }));
-
-    const timePressureTestMap = Object.entries(labelingFunction).map(([stim, correct_response]) => ({
-      stim,
-      correct_response,
-      catch: false,
-      task_part: 'time_pressure_test'
-    }));
-    timePressureTestMap.push(...catchEntry);
 
     // For when participant times out too many times or exits fullscreen
     function forceEnd(reason){
@@ -332,22 +324,14 @@
     const bee_trial = {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: function(){
-        // If this timeline variable marks a time pressure test, apply a fast fade to the bee (unless it's a catch trial)
-        const isTimePressure = jsPsych.evaluateTimelineVariable('task_part') === 'time_pressure_test';
-        const isCatch = jsPsych.evaluateTimelineVariable('catch');
-        const fadeClass = (isTimePressure && !isCatch) ? ' jspsych-bee-fade' : '';
         return `
-          <style>
-            @keyframes jspsych_fade_out { to { opacity: 0; } }
-            .jspsych-bee-fade { animation: jspsych_fade_out 600ms forwards; }
-          </style>
           <p class='correct' style='visibility:hidden;margin:10px;'}>Correct</p>
           <div style='display:flex'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/A.png'>
               <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
             </div>
-            <img class='bee${fadeClass}' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'),metalearningAssignment[metalearningBlock])}'>
+            <img class='bee' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'),metalearningAssignment[metalearningBlock])}'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/L.png'>
               <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
@@ -500,20 +484,6 @@
       ],
     }
 
-    const time_pressure_test_instructions = {
-      timeline: [
-        {
-          type: jsPsychHtmlButtonResponse,
-          stimulus: jsPsych.timelineVariable('stim'),
-          choices: jsPsych.timelineVariable('buttonText'),
-          enable_button_after: 3000,
-        }
-      ],
-      timeline_variables: [
-        {stim: "<p>Think fast! We will show you the same bugs, but this time <b>they will only be on screen for 1 second</b>.<br> You won't receive any feedback on this part, but do your best!</p>", buttonText: ["Start"]},
-      ],
-    }
-
     var test = {
       timeline: [
           bee_trial,
@@ -522,20 +492,6 @@
       timeline_variables: testMap,
       randomize_order: true,
       repetitions: numTestBlocks,
-    }
-
-    var time_pressure_test = {
-      timeline: [
-          bee_trial,
-          iti,
-      ],
-      timeline_variables: timePressureTestMap,
-      randomize_order: true,
-      repetitions: numTestBlocks,
-      on_timeline_finish: function(){
-        // Finished a metalearning block
-        metalearningBlock += 1
-      },
     }
 
     // Build an array of task blocks (each block has different proporton of central/peripheral trials)
@@ -626,21 +582,14 @@
           {
             ...bee_trial,
             stimulus: function() {
-              const isTimePressure = currentMetalearningStim.task_part === 'time_pressure_test';
-              const isCatch = currentMetalearningStim.catch;
-              const fadeClass = (isTimePressure && !isCatch) ? ' jspsych-bee-fade' : '';
               return `
-                <style>
-                  @keyframes jspsych_fade_out { to { opacity: 0; } }
-                  .jspsych-bee-fade { animation: jspsych_fade_out 600ms forwards; }
-                </style>
                 <p class='correct' style='visibility:hidden;margin:10px;''>Correct</p>
                 <div style='display:flex'>
                   <div class='flex-choice'>
                     <img class='key' src='assets/img/task/A.png'>
                     <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
                   </div>
-                  <img class='bee${fadeClass}' src='${getImagePath(currentMetalearningStim.stim, metalearningAssignment[metalearningBlock])}'>
+                  <img class='bee' src='${getImagePath(currentMetalearningStim.stim, metalearningAssignment[metalearningBlock])}'>
                   <div class='flex-choice'>
                     <img class='key' src='assets/img/task/L.png'>
                     <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
@@ -751,7 +700,7 @@
       blocks.push({
         timeline: [metalearning_trial_procedure],
         on_timeline_finish: function() {
-          // Reset for the next phase (curriculum phase will use the same color)
+          // End of metalearning phase: advance to the second color for curriculum + test
           metalearningTrialCount = 0;
           metalearningBlock += 1
           trialNum = 0;

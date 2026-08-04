@@ -57,21 +57,21 @@ test_data <- read_csv("../data/exp2_test.csv",show_col_types = FALSE)
 test_data$trial_z <- scale_this(test_data$trialNum)
 
 train_data_curr <- read_csv("../data/exp2_learning_curriculum.csv",show_col_types = FALSE)
-train_data_curr$trial_z <- scale_this(train_data_curr$total_trial_num)
+train_data_curr$trial_z <- scale_this(train_data_curr$totalTrialNum)
 
 train_data_ctrl <- read_csv("../data/exp2_learning_control.csv",show_col_types = FALSE)
-train_data_ctrl$trial_z <- scale_this(train_data_ctrl$total_trial_num)
+train_data_ctrl$trial_z <- scale_this(train_data_ctrl$totalTrialNum)
 
 test_data_smrt <- read_csv("../data/exp2_test_smrt.csv",show_col_types = FALSE)
 test_data_smrt$pretrain_acc_z <- scale_this(test_data_smrt$pretrain_acc)
-test_data_smrt$mean_sa_z <- scale_this(test_data_smrt$mean_sa)
+test_data_smrt$selective_attention_z <- scale_this(test_data_smrt$selective_attention)
 
 learning_data_curriculum_smrt <- read_csv("../data/exp2_learning_curriculum_smrt.csv",show_col_types = FALSE)
-learning_data_curriculum_smrt$mean_sa_z <- scale_this(learning_data_curriculum_smrt$mean_sa)
+learning_data_curriculum_smrt$selective_attention_z <- scale_this(learning_data_curriculum_smrt$selective_attention)
 learning_data_curriculum_smrt$trial_z <- scale_this(learning_data_curriculum_smrt$trialNum)
 
 learning_data_control_smrt <- read_csv("../data/exp2_learning_control_smrt.csv",show_col_types = FALSE)
-learning_data_control_smrt$mean_sa_z <- scale_this(learning_data_control_smrt$mean_sa)
+learning_data_control_smrt$selective_attention_z <- scale_this(learning_data_control_smrt$selective_attention)
 learning_data_control_smrt$trial_z <- scale_this(learning_data_control_smrt$trialNum)
 ```
 
@@ -125,9 +125,7 @@ my_tab_model(test_mod_trialwise)
 
 ### Test model smrt 
 ```{r test mod smrt }
-cor(test_data_smrt$mean_sa_z, test_data_smrt$pretrain_acc_z)
-
-test_smrt_mod = glmer(correct ~ curriculum * mean_sa_z * stimType + (stimType | subjectId), 
+test_smrt_mod = glmer(correct ~ curriculum * selective_attention_z * stimType + (stimType | subjectId), 
                   data = test_data_smrt,
                   family = binomial,
                   control = glmerControl(
@@ -144,7 +142,7 @@ my_tab_model(test_smrt_mod)
 ### Train model smrt 
 ```{r train mod smrt }
 
-train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z * stimType | subjectId), 
+train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * selective_attention_z + ( trial_z * stimType | subjectId), 
                   data = learning_data_curriculum_smrt,
                   family = binomial,
                   control = glmerControl(
@@ -153,11 +151,14 @@ train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z 
                   ),
                   contrasts = list(
                   stimType="contr.sum"))
-
 my_tab_model(train_curr_smrt_mod)
 summary(train_curr_smrt_mod)
 
-train_ctrl_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z * stimType | subjectId), 
+#aa <- allFit(train_curr_smrt_mod)
+#summary(aa)
+#rePCA(train_curr_smrt_mod)
+
+train_ctrl_smrt_mod = glmer(correct ~ stimType * trial_z * selective_attention_z + (1 + trial_z + stimType | subjectId), 
                   data = learning_data_control_smrt,
                   family = binomial,
                   control = glmerControl(
@@ -166,7 +167,7 @@ train_ctrl_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z 
                   ),
                   contrasts = list(
                   stimType="contr.sum"))
-
 my_tab_model(train_ctrl_smrt_mod)
 summary(train_ctrl_smrt_mod)
+
 ```

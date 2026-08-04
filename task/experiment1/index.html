@@ -61,10 +61,9 @@
       '100': 1,
     }
     
-    const numFeatures = 3; 
-    const bonusPerTrial = 0.9;
+    const numFeatures = 3;
+    const bonusPerTrial = 0.41;
     const numTestBlocks = 2
-    const numMetalearningBlocks = 4
 
     // Variables to be read in from URLparams
     var prolificId
@@ -94,31 +93,27 @@
       return {featureAssignment, flipFeatureValues};
     }
 
-    function getImagePath(input, metalearningAssignment) {
+    const featureRandomization = generateFeatureAssignment(numFeatures)
+
+    function getImagePath(input) {
       if (input == 'catch') {
         return "assets/img/bugs/catch.png";
       }
-      const color = metalearningAssignment['color']
-      const featureAssignment = metalearningAssignment['randomization']['featureAssignment']
-      const flipFeatureValues = metalearningAssignment['randomization']['flipFeatureValues']
-      const output =  "assets/img/bugs/" + color + "-" + input
+      const featureAssignment = featureRandomization['featureAssignment']
+      const flipFeatureValues = featureRandomization['flipFeatureValues']
+      const output =  "assets/img/bugs/yellow-" + input
         .split('')
         .map((bit, index) => (flipFeatureValues[featureAssignment[index]] && input[featureAssignment[index]]!='x') ?  1-input[featureAssignment[index]] : input[featureAssignment[index]])
         .join('-') + ".png";
       return output
     }
 
-    const metalearningAssignment = jsPsych.randomization.repeat([
-        {color: 'red', randomization: generateFeatureAssignment(numFeatures)},
-        {color: 'blue', randomization: generateFeatureAssignment(numFeatures)}
-    ], 1)
-
 
     // generate 5 stim maps with specified central/peripheral counts
     const centralEntries = Object.entries(central).map(([stim, correct_response]) => ({stim, correct_response, catch: false, task_part: 'learning'}));
     const peripheralEntries = Object.entries(exceptions).map(([stim, correct_response]) => ({stim, correct_response, catch: false, task_part: 'learning'}));
     const catchEntry = [{stim:'catch', correct_response: ' ', catch: true, task_part: 'learning'}]
-    const catchCount = 4; // number of catch trials per 48 task trials
+    const catchCount = 6; // number of catch trials per 48 task trials
 
     function buildStimMap(centralCount, peripheralCount, catchCount){
       return arr = [
@@ -152,26 +147,12 @@
       stimMap = Array.from({length: numLearningBlocks}, () => buildStimMap(6, 6, catchCount));
     }
 
-    // Four blocks with 8 stim each, no curriculum
-    var stimMapMetalearning = [
-      ...Array.from({length: numMetalearningBlocks}, () => buildStimMap(1, 1, 1).map(t => ({ ...t, task_part: 'metalearning' })))
-    ]
-
     const testMap = Object.entries(labelingFunction).map(([stim, correct_response]) => ({
       stim,
       correct_response,
       catch: false,
       task_part: 'test'
     }));
-    testMap.push(...catchEntry);
-
-    const timePressureTestMap = Object.entries(labelingFunction).map(([stim, correct_response]) => ({
-      stim,
-      correct_response,
-      catch: false,
-      task_part: 'time_pressure_test'
-    }));
-    timePressureTestMap.push(...catchEntry);
 
     // For when participant times out too many times or exits fullscreen
     function forceEnd(reason){
@@ -207,7 +188,7 @@
             metadata: {
                 taskVersion: 'simplicity_metalearning',
                 labelingFunction,
-                metalearningAssignment,
+                featureRandomization,
                 responseMap,
                 curriculumCondition,
                 stimMap,
@@ -227,22 +208,14 @@
     const preload = {
       type: jsPsychPreload,
       images: [
-        'assets/img/bugs/blue-0-0-0.png',
-        'assets/img/bugs/blue-0-0-1.png',
-        'assets/img/bugs/blue-0-1-0.png',
-        'assets/img/bugs/blue-0-1-1.png',
-        'assets/img/bugs/blue-1-0-0.png',
-        'assets/img/bugs/blue-1-0-1.png',
-        'assets/img/bugs/blue-1-1-0.png',
-        'assets/img/bugs/blue-1-1-1.png',
-        'assets/img/bugs/red-0-0-0.png',
-        'assets/img/bugs/red-0-0-1.png',
-        'assets/img/bugs/red-0-1-0.png',
-        'assets/img/bugs/red-0-1-1.png',
-        'assets/img/bugs/red-1-0-0.png',
-        'assets/img/bugs/red-1-0-1.png',
-        'assets/img/bugs/red-1-1-0.png',
-        'assets/img/bugs/red-1-1-1.png',
+        'assets/img/bugs/yellow-0-0-0.png',
+        'assets/img/bugs/yellow-0-0-1.png',
+        'assets/img/bugs/yellow-0-1-0.png',
+        'assets/img/bugs/yellow-0-1-1.png',
+        'assets/img/bugs/yellow-1-0-0.png',
+        'assets/img/bugs/yellow-1-0-1.png',
+        'assets/img/bugs/yellow-1-1-0.png',
+        'assets/img/bugs/yellow-1-1-1.png',
         'assets/img/bugs/catch.png',
         'assets/img/task/A.png',
         'assets/img/task/L.png',
@@ -281,11 +254,10 @@
       ],
       timeline_variables: [
         {stim: "<p>Today, you will be learning to tell the difference between <b>good bugs</b> and <b>bad bugs</b>.</p>", buttonText: ["Next"]},
-        {stim: "<p>You will learn about two sets of bugs with different body colors: red bugs and blue bugs.</p><p>For both sets of bugs, there will be some that are good and some that are bad.</p>", buttonText: ["Next"]},
         {stim: `<p>In every trial, you will see a picture of a bug and press <b>A</b> or <b>L</b> to indicate whether it is good or bad.</p><img class='instructions' src='assets/img/instructions/${goodBeesOnLeft ? '2' : '2_right'}.png'>`, buttonText: ["Next"]},
         {stim: "<p>On some trials, your scientist friend will tell you if you were correct or incorrect.</p><img class='instructions' src='assets/img/instructions/3.png'>", buttonText: ["Next"]},
         {stim: "<p>On other trials, you won't receive any feedback.</p><img class='instructions' src='assets/img/instructions/4.png'>", buttonText: ["Next"]},
-        {stim: `<p>Try your best to learn about the bugs! <br> You can earn up to <b>&pound3 in bonus money</b> for making correct choices.</p><img class='instructions' src='assets/img/instructions/5.png'>`, buttonText: ["Next"]},
+        {stim: `<p>Try your best to learn about the bugs! <br> You can earn up to <b>&pound1 in bonus money</b> for making correct choices.</p><img class='instructions' src='assets/img/instructions/5.png'>`, buttonText: ["Next"]},
         {stim: "<p>One last thing, if you see a rare green bee, you should press <b>Spacebar</b> to catch it. <br> Bee careful, <b> if you miss 4 green bees, your task will be returned. </b> </p><img class='instructions' src='assets/img/instructions/6.png'>", buttonText: ["Start"]}
       ],
     }
@@ -294,29 +266,21 @@
     var blockNum = 0
     var timeouts = 0;
     var catchMissed = 0
-    var bonus = 0; 
-    var metalearningBlock = 0
+    var bonus = 0;
     var consecutiveCorrect = 0
 
     const bee_trial = {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: function(){
-        // If this timeline variable marks a time pressure test, apply a fast fade to the bee (unless it's a catch trial)
-        const isTimePressure = jsPsych.evaluateTimelineVariable('task_part') === 'time_pressure_test';
         const isCatch = jsPsych.evaluateTimelineVariable('catch');
-        const fadeClass = (isTimePressure && !isCatch) ? ' jspsych-bee-fade' : '';
         return `
-          <style>
-            @keyframes jspsych_fade_out { to { opacity: 0; } }
-            .jspsych-bee-fade { animation: jspsych_fade_out 600ms forwards; }
-          </style>
           <p class='correct' style='visibility:hidden;margin:10px;'}>Correct</p>
           <div style='display:flex'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/A.png'>
               <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
             </div>
-            <img class='bee${fadeClass}' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'),metalearningAssignment[metalearningBlock])}'>
+            <img class='bee' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'))}'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/L.png'>
               <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
@@ -332,7 +296,7 @@
         data.response = data.response ? data.response.toLowerCase() : null;
         data.correctResponse = jsPsych.evaluateTimelineVariable('correct_response');
         data.stimuli = jsPsych.evaluateTimelineVariable('stim');
-        data.imagePath = getImagePath(jsPsych.evaluateTimelineVariable('stim'), metalearningAssignment[metalearningBlock]);
+        data.imagePath = getImagePath(jsPsych.evaluateTimelineVariable('stim'));
         data.catch = jsPsych.evaluateTimelineVariable('catch');
         data.taskPart = jsPsych.evaluateTimelineVariable('task_part');
         data.timeout = data.response === null;
@@ -340,14 +304,13 @@
         data.correct = data.responseCoded === data.correctResponse && data.correctResponse!= null;
         data.trialNum = trialNum
         data.blockNum = blockNum
-        data.metalearningBlock = metalearningBlock
        
         var block_length
         if (!data.catch){
           bonus += data.correct ? bonusPerTrial : 0
           if (data.correct){
             consecutiveCorrect += 1
-            jsPsych.progressBar.progress = bonus / (bonusPerTrial * (blockLength * numLearningBlocks + numMetalearningBlocks * 8 + numTestBlocks * 2 * 8) );
+            jsPsych.progressBar.progress = bonus / (bonusPerTrial * ((blockLength - catchCount) * numLearningBlocks + numTestBlocks * 8) );
           } else {
             consecutiveCorrect = 0
           }
@@ -399,7 +362,7 @@
               <img class='key' src='assets/img/task/A.png'>
               <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
             </div>
-            <img class='bee' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'), metalearningAssignment[metalearningBlock])}'>
+            <img class='bee' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'))}'>
             <div class='flex-choice${choice == 'l' ? ' chosen' : ''}'>
               <img class='key' src='assets/img/task/L.png'>
               <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
@@ -436,12 +399,10 @@
 
     const block_instructions = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: function(){
-        return `<p>Now, you will learn about which of the ${metalearningAssignment[metalearningBlock]['color']} bugs are good or bad.</p><p>Remember, you will earn bonus money for correct answers.</p>`
-      },
+      stimulus: `<p>Now, you will learn about which bugs are good or bad.</p><p>Remember, you will earn bonus money for correct answers.</p>`,
       choices: ["Start"],
       enable_button_after: 3000,
-      on_finish: function(){ 
+      on_finish: function(){
         document.getElementById("jspsych-progressbar-container").style.visibility = "visible";
       }
     }
@@ -472,20 +433,6 @@
       ],
     }
 
-    const time_pressure_test_instructions = {
-      timeline: [
-        {
-          type: jsPsychHtmlButtonResponse,
-          stimulus: jsPsych.timelineVariable('stim'),
-          choices: jsPsych.timelineVariable('buttonText'),
-          enable_button_after: 3000,
-        }
-      ],
-      timeline_variables: [
-        {stim: "<p>Think fast! We will show you the same bugs, but this time <b>they will only be on screen for 1 second</b>.<br> You won't receive any feedback on this part, but do your best because you will still get a bonus for each bug you get right.</p>", buttonText: ["Start"]},
-      ],
-    }
-
     var test = {
       timeline: [
           bee_trial,
@@ -494,21 +441,6 @@
       timeline_variables: testMap,
       randomize_order: true,
       repetitions: numTestBlocks,
-    }
-
-    var time_pressure_test = {
-      timeline: [
-          bee_trial,
-          iti,
-      ],
-      timeline_variables: timePressureTestMap,
-      randomize_order: true,
-      repetitions: numTestBlocks,
-      on_timeline_finish: function(){
-        // Finished a metalearning block
-        metalearningBlock += 1
-        document.getElementById("jspsych-progressbar-container").style.visibility = "visible";
-      },
     }
 
     // Build an array of task blocks (each block has different proporton of central/peripheral trials)
@@ -543,14 +475,14 @@
       jatos.onLoad(() => {
         prolificId = jatos.urlQueryParameters.PROLIFIC_PID
         studyId = jatos.urlQueryParameters.STUDY_ID
-        jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMap), test_instructions, test, time_pressure_test_instructions, time_pressure_test, ...curriculum_blocks(stimMapMetalearning), save_bonus]); 
+        jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]);
       });
     }
     else {
       // For testing purposes
       prolificId = "test"
       studyId = "test"
-      jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMap), test_instructions, test, time_pressure_test_instructions, time_pressure_test, ...curriculum_blocks(stimMapMetalearning), save_bonus]); 
+      jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]);
     }
   
   </script>

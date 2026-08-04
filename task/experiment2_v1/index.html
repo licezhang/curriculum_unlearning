@@ -83,11 +83,10 @@
       '100': 1,
     }
     
-    const numFeatures = 3; 
+    const numFeatures = 3;
     const bonusPerTrial = 0.41;
     const numTestBlocks = 2
     const numMetalearningBlocks = 30
-    const numNoiseTrialsPerMetalearningBlock = 2
 
     // Variables to be read in from URLparams
     var prolificId
@@ -172,38 +171,18 @@
       stimMap = Array.from({length: numLearningBlocks}, () => buildStimMap(6, 6, catchCount));
     }
 
-    // Set up simple rule with random noise for metalearning blocks
-    var stimMapMetalearning = [
-      ...Array.from({length: numMetalearningBlocks}, () => {
-        const entries = Object.entries(oneDFunction).map(([stim, correct_response]) => ({stim, correct_response, catch: false, task_part: 'metalearning'}));
-        // Randomly select 4 entries to flip
-        const indices = [...Array(entries.length).keys()].sort(() => Math.random() - 0.5).slice(0, numNoiseTrialsPerMetalearningBlock);
-        indices.forEach(i => {
-          entries[i].correct_response = 1 - entries[i].correct_response;
-        });
-        return [
-          ...entries,
-          ...catchEntry
-        ]
-      })
-    ]
-    // Assign metalearning condition randomly and generate stim map for metalearning blocks
+    // Assign metalearning condition randomly
     const metalearningCondition = (() => {
-      const options = ['simple_with_noise', 'xor'];
+      const options = ['simple_rule', 'xor'];
       const choice = options[Math.floor(Math.random() * options.length)];
       return choice;
     })();
-    if (metalearningCondition == 'xor'){
-      stimMapMetalearning = [
-        ...Array.from({length: numMetalearningBlocks}, () => {
-          const entries = Object.entries(xorFunction).map(([stim, correct_response]) => ({stim, correct_response, catch: false, task_part: 'metalearning'}));
-          return [
-            ...entries,
-            ...catchEntry
-          ]
-        })
-      ]
-    }
+
+    // Base stim set for the metalearning phase (8 stims, sampled with replacement each trial)
+    const baseMetalearningStim = (metalearningCondition == 'xor'
+      ? Object.entries(xorFunction)
+      : Object.entries(oneDFunction)
+    ).map(([stim, correct_response]) => ({stim, correct_response, catch: false, task_part: 'metalearning'}));
     
     const testMap = Object.entries(labelingFunction).map(([stim, correct_response]) => ({
       stim,
@@ -211,15 +190,6 @@
       catch: false,
       task_part: 'test'
     }));
-    testMap.push(...catchEntry);
-
-    const timePressureTestMap = Object.entries(labelingFunction).map(([stim, correct_response]) => ({
-      stim,
-      correct_response,
-      catch: false,
-      task_part: 'time_pressure_test'
-    }));
-    timePressureTestMap.push(...catchEntry);
 
     // For when participant times out too many times or exits fullscreen
     function forceEnd(reason){
@@ -350,22 +320,15 @@
     const bee_trial = {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: function(){
-        // If this timeline variable marks a time pressure test, apply a fast fade to the bee (unless it's a catch trial)
-        const isTimePressure = jsPsych.evaluateTimelineVariable('task_part') === 'time_pressure_test';
         const isCatch = jsPsych.evaluateTimelineVariable('catch');
-        const fadeClass = (isTimePressure && !isCatch) ? ' jspsych-bee-fade' : '';
         return `
-          <style>
-            @keyframes jspsych_fade_out { to { opacity: 0; } }
-            .jspsych-bee-fade { animation: jspsych_fade_out 600ms forwards; }
-          </style>
           <p class='correct' style='visibility:hidden;margin:10px;'}>Correct</p>
           <div style='display:flex'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/A.png'>
               <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
             </div>
-            <img class='bee${fadeClass}' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'),metalearningAssignment[metalearningBlock])}'>
+            <img class='bee' src='${getImagePath(jsPsych.evaluateTimelineVariable('stim'),metalearningAssignment[metalearningBlock])}'>
             <div class='flex-choice'>
               <img class='key' src='assets/img/task/L.png'>
               <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
@@ -396,7 +359,7 @@
           bonus += data.correct ? bonusPerTrial : 0
           if (data.correct){
             consecutiveCorrect += 1
-            jsPsych.progressBar.progress = bonus / (bonusPerTrial * (blockLength * numLearningBlocks + numMetalearningBlocks * 8 + numTestBlocks * 2 * 8) );
+            jsPsych.progressBar.progress = bonus / (bonusPerTrial * (blockLength * numLearningBlocks + numMetalearningBlocks * 8 + numTestBlocks * 8) );
           } else {
             consecutiveCorrect = 0
           }
@@ -521,20 +484,6 @@
       ],
     }
 
-    const time_pressure_test_instructions = {
-      timeline: [
-        {
-          type: jsPsychHtmlButtonResponse,
-          stimulus: jsPsych.timelineVariable('stim'),
-          choices: jsPsych.timelineVariable('buttonText'),
-          enable_button_after: 3000,
-        }
-      ],
-      timeline_variables: [
-        {stim: "<p>Think fast! We will show you the same bugs, but this time <b>they will only be on screen for 1 second</b>.<br> You won't receive any feedback on this part, but do your best because you will still get a bonus for each bug you get right.</p>", buttonText: ["Start"]},
-      ],
-    }
-
     var test = {
       timeline: [
           bee_trial,
@@ -545,19 +494,191 @@
       repetitions: numTestBlocks,
     }
 
-    var time_pressure_test = {
-      timeline: [
-          bee_trial,
-          iti,
-      ],
-      timeline_variables: timePressureTestMap,
-      randomize_order: true,
-      repetitions: numTestBlocks,
-      on_timeline_finish: function(){
-        // Finished a metalearning block
-        metalearningBlock += 1
-        document.getElementById("jspsych-progressbar-container").style.visibility = "visible";
-      },
+    // Continuous metalearning procedure with error-corrective feedback (matches exp2 v2).
+    // Total trials is fixed at numMetalearningBlocks * (numMetalearningTrialsPerBlock + 1);
+    // on an incorrect trial the same stim is shown again next iteration (consumes budget).
+    const numMetalearningTrialsPerBlock = 8;
+    var currentMetalearningStim = null;
+    var metalearningTrialCount = 0;
+    var catchTrialPosition = [];
+
+    function metalearning_blocks() {
+      const blocks = [];
+      blocks.push(block_instructions);
+
+      const totalMetalearningTrials = numMetalearningBlocks * (numMetalearningTrialsPerBlock + 1);
+
+      const metalearning_trial_procedure = {
+        timeline: [
+          {
+            type: jsPsychCallFunction,
+            func: function() {
+              // Assign one catch per (numMetalearningTrialsPerBlock + 1)-trial window at start
+              if (metalearningTrialCount === 0) {
+                catchTrialPosition = [];
+                for (let i = 0; i < numMetalearningBlocks; i++) {
+                  const blockStart = i * (numMetalearningTrialsPerBlock + 1);
+                  const randomOffset = Math.floor(Math.random() * (numMetalearningTrialsPerBlock + 1));
+                  catchTrialPosition.push(blockStart + randomOffset);
+                }
+              }
+
+              const isCatchTrial = catchTrialPosition.includes(metalearningTrialCount);
+              if (isCatchTrial) {
+                currentMetalearningStim = {...catchEntry[0], task_part: 'metalearning'};
+              } else {
+                const previousTrials = jsPsych.data.get().filter({metalearningBlock: metalearningBlock, taskPart: 'metalearning'});
+                if (previousTrials.count() === 0) {
+                  currentMetalearningStim = jsPsych.randomization.sampleWithReplacement(baseMetalearningStim, 1)[0];
+                } else {
+                  const lastTrial = previousTrials.last(1).values()[0];
+                  // Advance to a new stim on correct or catch; otherwise keep same stim (repeat)
+                  if (lastTrial.correct || lastTrial.catch) {
+                    currentMetalearningStim = jsPsych.randomization.sampleWithReplacement(baseMetalearningStim, 1)[0];
+                  }
+                }
+              }
+
+              blockNum = Math.floor(metalearningTrialCount / (numMetalearningTrialsPerBlock + 1));
+            }
+          },
+          {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+              const isCatch = currentMetalearningStim.catch;
+              return `
+                <p class='correct' style='visibility:hidden;margin:10px;'}>Correct</p>
+                <div style='display:flex'>
+                  <div class='flex-choice'>
+                    <img class='key' src='assets/img/task/A.png'>
+                    <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
+                  </div>
+                  <img class='bee' src='${getImagePath(currentMetalearningStim.stim, metalearningAssignment[metalearningBlock])}'>
+                  <div class='flex-choice'>
+                    <img class='key' src='assets/img/task/L.png'>
+                    <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
+                  </div>
+                </div>
+                <img src='assets/img/task/space.png' style='width:300px;opacity:50%;visibility:${isCatch ? 'visible' : 'hidden'}'>`;
+            },
+            choices: function() {
+              return currentMetalearningStim.catch ? ['a', 'l', ' '] : ['a', 'l'];
+            },
+            trial_duration: 10000,
+            on_finish: function(data) {
+              data.response = data.response ? data.response.toLowerCase() : null;
+              data.correctResponse = currentMetalearningStim.correct_response;
+              data.stimuli = currentMetalearningStim.stim;
+              data.imagePath = getImagePath(currentMetalearningStim.stim, metalearningAssignment[metalearningBlock]);
+              data.catch = currentMetalearningStim.catch;
+              data.taskPart = currentMetalearningStim.task_part;
+              data.timeout = data.response === null;
+              data.responseCoded = responseMap[data.response];
+              data.correct = data.responseCoded === data.correctResponse && data.correctResponse != null;
+              data.trialNum = trialNum;
+              data.blockNum = blockNum;
+              data.metalearningBlock = metalearningBlock;
+              data.metalearningTrialCount = metalearningTrialCount;
+
+              if (!data.catch) {
+                bonus += data.correct ? bonusPerTrial : 0;
+                if (data.correct) {
+                  consecutiveCorrect += 1;
+                  jsPsych.progressBar.progress = bonus / (bonusPerTrial * (blockLength * numLearningBlocks + numMetalearningBlocks * 8 + numTestBlocks * 8));
+                } else {
+                  consecutiveCorrect = 0;
+                }
+              }
+              data.bonus = bonus / 100;
+              trialNum += 1;
+              metalearningTrialCount += 1;
+            }
+          },
+          {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+              const last = jsPsych.data.get().last(1).values()[0];
+              const timeout = last.timeout;
+              const correct = last.correct;
+              const choice = last.response;
+              const missedCatch = currentMetalearningStim.catch && choice !== ' ';
+              const showFeedback = currentMetalearningStim.correct_response != null && currentMetalearningStim.task_part != 'test';
+
+              if (timeout) {
+                timeouts += 1;
+                if (timeouts > 5) forceEnd("timeout");
+                return `
+                  <div style='font-size:20px;'>
+                    <p><b>You ran out of time!</b> Please respond faster.</p>
+                    <p class='warn'>If you time out more than 5 times, your task will be returned.</p>
+                    <p><i>Press N to continue</i></p>
+                  </div>`;
+              } else if (missedCatch) {
+                catchMissed += 1;
+                if (catchMissed == 4) forceEnd("missedcatch");
+                return `
+                  <div style='font-size:20px;'>
+                    <p><b>You missed a green bee!</b> Please press the Spacebar when you see a green bee.</p>
+                    <p class='warn'>If you miss 4 green bees, your task will be returned.</p>
+                    <p><i>Press N to continue</i></p>
+                  </div>`;
+              } else {
+                return `
+                  <p class=${correct ? 'correct': 'incorrect'} style='margin:10px;visibility:${showFeedback?'visible':'hidden'}'>${correct ? "Correct" : "Incorrect"}</p>
+                  <div style='display:flex'>
+                    <div class='flex-choice${choice == 'a' ? ' chosen' : ''}' >
+                      <img class='key' src='assets/img/task/A.png'>
+                      <p><b> ${goodBeesOnLeft ? "good bug" : "bad bug"} </b></p>
+                    </div>
+                    <img class='bee' src='${getImagePath(currentMetalearningStim.stim, metalearningAssignment[metalearningBlock])}'>
+                    <div class='flex-choice${choice == 'l' ? ' chosen' : ''}'>
+                      <img class='key' src='assets/img/task/L.png'>
+                      <p><b> ${goodBeesOnLeft ? "bad bug" : "good bug"} </b></p>
+                    </div>
+                  </div>
+                  <img src='assets/img/task/space.png' style='width:300px;opacity:${choice==[' '?'100%':'50%']};visibility:${currentMetalearningStim.catch ? 'visible' : 'hidden'}'>`;
+              }
+            },
+            choices: function() {
+              const choice = jsPsych.data.get().last(1).values()[0].response;
+              if (choice == null || (currentMetalearningStim.catch && choice !== ' ')) {
+                return "n";
+              } else {
+                return "NO_KEYS";
+              }
+            },
+            trial_duration: function() {
+              const choice = jsPsych.data.get().last(1).values()[0].response;
+              if (choice == null || (currentMetalearningStim.catch && choice !== ' ')) {
+                return null;
+              } else {
+                return 2000;
+              }
+            }
+          },
+          iti
+        ],
+        loop_function: function() {
+          return metalearningTrialCount < totalMetalearningTrials;
+        }
+      };
+
+      blocks.push({
+        timeline: [metalearning_trial_procedure],
+        on_timeline_finish: function() {
+          // End of metalearning phase: advance to the second color for curriculum + test
+          metalearningTrialCount = 0;
+          trialNum = 0;
+          blockNum = 0;
+          metalearningBlock += 1;
+          document.getElementById("jspsych-progressbar-container").style.visibility = "hidden";
+          if (typeof jatos !== 'undefined') {
+            jatos.submitResultData(jsPsych.data.get().json());
+          }
+        }
+      });
+
+      return blocks;
     }
 
     // Build an array of task blocks (each block has different proporton of central/peripheral trials)
@@ -576,11 +697,6 @@
               // Submit data to JATOS
               jatos.submitResultData(jsPsych.data.get().json());
             }
-            if (blockNum == numMetalearningBlocks) {
-              // reset block count
-              blockNum = 0
-              document.getElementById("jspsych-progressbar-container").style.visibility = "hidden";
-            }
           },
         };
         blocks.push(trials_node);
@@ -592,14 +708,14 @@
       jatos.onLoad(() => {
         prolificId = jatos.urlQueryParameters.PROLIFIC_PID
         studyId = jatos.urlQueryParameters.STUDY_ID
-        jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMapMetalearning), ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]); 
+        jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...metalearning_blocks(), ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]);
       });
     }
     else {
       // For testing purposes
       prolificId = "test"
       studyId = "test"
-      jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...curriculum_blocks(stimMapMetalearning), ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]); 
+      jsPsych.run([save_metadata, preload, fullscreen_enter, instructions, ...metalearning_blocks(), ...curriculum_blocks(stimMap), test_instructions, test, save_bonus]);
     }
   
   </script>
