@@ -1,0 +1,173 @@
+---
+title: "simplicity_modeling"
+output: html_document
+date: "2026-02-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(ggplot2)
+library(afex)
+library(Rmisc)
+library(dplyr)
+library(sjPlot)
+library(tidyr)
+library(ggh4x)
+library(performance)
+library(emmeans)
+```
+
+## Helper functions
+```{r define model functions, include=FALSE}
+my_tab_model <- function(model){
+  tab_model(model, 
+          df.method = "wald",
+          show.stat=TRUE,
+          CSS = list(css.tdata = 'padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm;'),
+          transform = NULL,
+          string.stat = "z",
+          string.p = "p > |z|",
+          show.re.var = FALSE,
+          show.icc = FALSE,
+          show.r2 = FALSE,
+          wrap.labels = 100,
+          show.ngroups = FALSE,
+          show.obs = FALSE)
+}
+
+my_plot_model <- function(model){
+  plot_model(model, 
+          show.intercept = T,
+          value.offset = 0.35,
+          transform = NULL,
+          show.values = T,) + 
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = .5)
+}
+
+scale_this <- function(x){
+  (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
+}
+```
+
+### Loading Data
+All continuous variables are z-scored
+```{r read data, echo=T, results='hide', warning=FALSE}
+test_data <- read_csv("../data/exp2_test.csv",show_col_types = FALSE)
+test_data$trial_z <- scale_this(test_data$trialNum)
+
+train_data_curr <- read_csv("../data/exp2_learning_curriculum.csv",show_col_types = FALSE)
+train_data_curr$trial_z <- scale_this(train_data_curr$totalTrialNum)
+
+train_data_ctrl <- read_csv("../data/exp2_learning_control.csv",show_col_types = FALSE)
+train_data_ctrl$trial_z <- scale_this(train_data_ctrl$totalTrialNum)
+
+test_data_smrt <- read_csv("../data/exp2_test_smrt.csv",show_col_types = FALSE)
+test_data_smrt$pretrain_acc_z <- scale_this(test_data_smrt$pretrain_acc)
+test_data_smrt$selective_attention_z <- scale_this(test_data_smrt$selective_attention)
+
+learning_data_curriculum_smrt <- read_csv("../data/exp2_learning_curriculum_smrt.csv",show_col_types = FALSE)
+learning_data_curriculum_smrt$selective_attention_z <- scale_this(learning_data_curriculum_smrt$selective_attention)
+learning_data_curriculum_smrt$trial_z <- scale_this(learning_data_curriculum_smrt$trialNum)
+
+learning_data_control_smrt <- read_csv("../data/exp2_learning_control_smrt.csv",show_col_types = FALSE)
+learning_data_control_smrt$selective_attention_z <- scale_this(learning_data_control_smrt$selective_attention)
+learning_data_control_smrt$trial_z <- scale_this(learning_data_control_smrt$trialNum)
+```
+
+### Train model 
+```{r train mod }
+
+train_ctrl_mod = glmer(correct ~ pretraining * stimType * trial_z + (trial_z * stimType | subjectId), 
+                  data = train_data_ctrl,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  pretraining="contr.sum", 
+                  stimType="contr.sum"))
+
+my_tab_model(train_ctrl_mod)
+
+train_curr_mod = glmer(correct ~ pretraining * stimType * trial_z + (trial_z * stimType | subjectId), 
+                  data = train_data_curr,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  pretraining="contr.sum", 
+                  stimType="contr.sum"))
+
+my_tab_model(train_curr_mod)
+
+```
+
+### Test model 
+```{r test mod}
+test_mod_trialwise = glmer(correct ~ curriculum * pretraining * stimType + (stimType | subjectId), 
+                  data = test_data,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  curriculum="contr.sum", 
+                  pretraining="contr.sum", 
+                  stimType="contr.sum"))
+
+my_tab_model(test_mod_trialwise)
+```
+
+### Test model smrt 
+```{r test mod smrt }
+test_smrt_mod = glmer(correct ~ curriculum * selective_attention_z * stimType + (stimType | subjectId), 
+                  data = test_data_smrt,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  curriculum="contr.sum",  
+                  stimType="contr.sum"))
+
+my_tab_model(test_smrt_mod)
+```
+
+### Train model smrt 
+```{r train mod smrt }
+
+train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * selective_attention_z + ( trial_z * stimType | subjectId), 
+                  data = learning_data_curriculum_smrt,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e6)
+                  ),
+                  contrasts = list(
+                  stimType="contr.sum"))
+my_tab_model(train_curr_smrt_mod)
+summary(train_curr_smrt_mod)
+
+#aa <- allFit(train_curr_smrt_mod)
+#summary(aa)
+#rePCA(train_curr_smrt_mod)
+
+train_ctrl_smrt_mod = glmer(correct ~ stimType * trial_z * selective_attention_z + (1 + trial_z + stimType | subjectId), 
+                  data = learning_data_control_smrt,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e6)
+                  ),
+                  contrasts = list(
+                  stimType="contr.sum"))
+my_tab_model(train_ctrl_smrt_mod)
+summary(train_ctrl_smrt_mod)
+
+```

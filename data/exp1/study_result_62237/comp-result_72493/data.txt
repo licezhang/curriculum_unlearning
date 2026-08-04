@@ -1,1 +1,0 @@
-{"q1":"No","q2":"I tried to identify 1 feature at a time that had changed","q3":"Yes, I had to try recall quickly what the variations of the bees’ features ","q4":"No strategy per se, just used my memory as best I could","q5":"No, I did not","q6":"No"}

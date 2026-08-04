@@ -1,1 +1,0 @@
-{"q1":"No","q2":"Looking at wing length, presence of heart on chest and the antennae","q3":"just looked at wings and heart on chest","q4":"Looks largely at just the wing shape","q5":"no","q6":"no"}

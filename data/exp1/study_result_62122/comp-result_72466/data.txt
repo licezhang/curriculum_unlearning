@@ -1,1 +1,0 @@
-{"q1":"No","q2":"I looked at the antenna first and categorise into good (star) or bad (circle), then look at belly, if it was a heart then I'd look at wings and if wings were circular they categories were opposite to usual.","q3":"I didn't notice a change in time shown","q4":"Same as above","q5":"No","q6":"no"}

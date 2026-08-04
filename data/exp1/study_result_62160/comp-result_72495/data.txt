@@ -1,1 +1,0 @@
-{"q1":"No","q2":"I didn't notice any pattern between good and bad bees, so I came up with my own thoughts for each one, e.g 'the normal looking bee is bad. it's still bad with a star on its head'","q3":"no","q4":"same","q5":"no","q6":"no"}

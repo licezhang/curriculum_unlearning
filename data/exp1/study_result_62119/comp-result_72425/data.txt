@@ -1,1 +1,0 @@
-{"q1":"No.","q2":"I tried to memorize the shape of their wings and whether they were holding something.","q3":"Not really.","q4":"I used the same strategy as before but tried not to think about it for too long.","q5":"No, I didn't.","q6":"No."}

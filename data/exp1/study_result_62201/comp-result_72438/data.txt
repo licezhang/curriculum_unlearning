@@ -1,1 +1,0 @@
-{"q1":"No.","q2":"Long wings usually bad.","q3":"No.","q4":"Round usually good.","q5":"No.","q6":"No."}
