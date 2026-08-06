@@ -25,11 +25,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from modelling.blob_training import (_condition_schedule, build_optimizer,
+from blob_training import (_condition_schedule, build_optimizer,
                            random_init_state, train_blob_grid)
 
 try:  # keep figures consistent with the rest of the notebook
-    from modelling.blob_plotting import _COND_COLOR, _COND_LABEL
+    from blob_plotting import _COND_COLOR, _COND_LABEL
 except Exception:                                                # pragma: no cover
     _COND_COLOR = {"standard": "C0", "curriculum": "C1"}
     _COND_LABEL = {"standard": "standard", "curriculum": "curriculum"}

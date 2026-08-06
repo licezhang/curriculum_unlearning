@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from modelling.blob_task import BlobTask
+from blob_task import BlobTask
 
 
 def build_optimizer(name, params, learning_rate):
@@ -49,8 +49,19 @@ def _condition_schedule(name, exception_prob, num_steps, device):
         return (2.0 * p * frac).clamp(0.0, 1.0)
     if name == "anti_curriculum":
         return (2.0 * p * (1.0 - frac)).clamp(0.0, 1.0)
+    if name == "curriculum_hold":
+        # Control for `curriculum`'s *terminal* exposure rate: ramp 0 -> 2p over
+        # the first half (mean p there), then hold at p. Mean is still p (matched
+        # like the others), but training now ENDS at p, exactly as `standard`
+        # does -- whereas `curriculum` ends at 2p, i.e. half of the last trials
+        # are exceptions. Separates "rule-first ordering" from "finishes on an
+        # exception-heavy diet", which matters because online SGD is recency-
+        # dominated (no replay).
+        ramp = 4.0 * p * frac
+        return torch.where(frac < 0.5, ramp,
+                           torch.full_like(frac, p)).clamp(0.0, 1.0)
     raise ValueError(f"unknown condition {name!r} (standard / curriculum / "
-                     f"anti_curriculum)")
+                     f"anti_curriculum / curriculum_hold)")
 
 
 def low_rank_init_W(population, n_hidden, input_dim, rank, weight_init_std,
