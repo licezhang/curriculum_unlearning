@@ -20,8 +20,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-import modelling.blob_experiments as exp
-from modelling.blob_task import BlobTask
+import blob_experiments as exp
+from blob_task import BlobTask
 
 EXPERIMENTS = {
     "main_sweep": exp.main_sweep,

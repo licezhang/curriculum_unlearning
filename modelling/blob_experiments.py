@@ -16,8 +16,8 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from modelling.blob_task import BlobTask
-from modelling.blob_training import train_blob_grid
+from blob_task import BlobTask
+from blob_training import train_blob_grid
 
 
 @dataclass
