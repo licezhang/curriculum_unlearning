@@ -1,1 +1,0 @@
-{"q1":"None","q2":"Stars and stripes = good\nHeart and round = good","q3":"No","q4":"Stars and stripes with thin wings = good, fat wings = bad\nHeart and round always good\n\n(round antenna) ","q5":"No","q6":"It was fun!"}

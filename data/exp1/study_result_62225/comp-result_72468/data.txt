@@ -1,1 +1,0 @@
-{"q1":"no","q2":"Trying to find patterns.","q3":"Trying to find whether each part of the bee was good or bad, but it took a while to work out.","q4":"Four wings good, unless with heart and stars, two wings bad, unless with heart and stars","q5":"no","q6":"no"}

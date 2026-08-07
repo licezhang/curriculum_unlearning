@@ -1,1 +1,0 @@
-{"q1":"No","q2":"I looked at the wings and the patterns.","q3":"No.","q4":"I looked for rounded wings or pointed wings.","q5":"No.","q6":"No."}

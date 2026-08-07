@@ -1,1 +1,0 @@
-{"q1":"It's fun, and I want to know what behind this experiment.","q2":"i just try to memorize my mistakes.","q3":"So I need to response faster.","q4":"Don't think much, follow the rules.","q5":"No, I just use my brain, eyes, and hands.","q6":"I don't know if it's my network or the experiment setting, I just found it takes longer time to get the next bug on the first set."}

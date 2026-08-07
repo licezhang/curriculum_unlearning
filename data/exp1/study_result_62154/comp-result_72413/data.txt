@@ -1,1 +1,0 @@
-{"q1":"I'd prefer a progress bar than a bonus bar","q2":"Pattern matching to rule in/out good/bad features. I believe it was star = good, round = bad, opposite IF scaly wings AND two lines","q3":"No","q4":"I relied on them being the first as the same, so I used my learnt knowledge","q5":"No","q6":"No"}

@@ -1,1 +1,0 @@
-{"q1":"none","q2":"i went with strips","q3":"yes","q4":"strips","q5":"no","q6":"none"}

@@ -1,1 +1,0 @@
-{"q1":"No","q2":"I tried to find the pattern when I got the answers correct","q3":"No","q4":"Followed the pattern that I learnt int he first round","q5":"No","q6":"Na"}
