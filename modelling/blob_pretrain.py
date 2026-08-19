@@ -28,11 +28,8 @@ import torch.nn.functional as F
 from blob_training import (_condition_schedule, build_optimizer,
                            random_init_state, train_blob_grid)
 
-try:  # keep figures consistent with the rest of the notebook
-    from blob_plotting import _COND_COLOR, _COND_LABEL
-except Exception:                                                # pragma: no cover
-    _COND_COLOR = {"standard": "C0", "curriculum": "C1"}
-    _COND_LABEL = {"standard": "standard", "curriculum": "curriculum"}
+_COND_COLOR = {"standard": "C0", "curriculum": "C1"}
+_COND_LABEL = {"standard": "standard", "curriculum": "curriculum"}
 
 _KIND_LABEL = {"none": "from scratch", "1d": "1-D rule", "xor": "XOR"}
 _KIND_COLOR = {"none": "0.5", "1d": "#d1495b", "xor": "#3f88c5"}
