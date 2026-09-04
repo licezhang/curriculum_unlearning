@@ -333,6 +333,7 @@ def train_blob_grid(
                    "logit_linearity")
     metrics = {k: [] for k in metric_keys}
     metrics_sem = {k: [] for k in metric_keys}   # std-error over seeds per cell
+    per_seed_curves = {"peripheral_accuracy": [], "central_accuracy": []}
     final_per_seed = {}                          # last-checkpoint (C,K,S) accuracy
     logit_trace, logit_trace_sem = [], []        # per-prototype logits -> (C,K,8,T)
     targets = labels.view(1, 1, -1)                        # broadcast to (2,P,8)
@@ -381,6 +382,8 @@ def train_blob_grid(
                 metrics[key].append(grouped.mean(-1).cpu().numpy())
                 sem = grouped.std(-1, unbiased=False) / (S ** 0.5)
                 metrics_sem[key].append(sem.cpu().numpy())
+                if key in per_seed_curves:
+                    per_seed_curves[key].append(grouped.cpu().numpy())
             if return_final_per_seed:                       # overwritten -> holds last
                 final_per_seed["peripheral"] = (
                     per_net["peripheral_accuracy"].reshape(C, K, S).cpu().numpy())
@@ -437,6 +440,9 @@ def train_blob_grid(
     for key in metrics:
         out[key] = np.stack(metrics[key], axis=-1)        # (C, K, T) mean
         out[key + "_sem"] = np.stack(metrics_sem[key], axis=-1)  # (C, K, T) SEM
+    for key, lst in per_seed_curves.items():
+        if lst:
+            out[key + "_per_seed"] = np.stack(lst, axis=-1)  # (C, K, S, T)
     if logit_trace:
         # decision variable per prototype over training (rule 0..5, exception 6..7)
         out["prototype_logits"] = np.stack(logit_trace, axis=-1)          # (C,K,8,T)

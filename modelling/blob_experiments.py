@@ -164,6 +164,9 @@ def compute_curve_data(config: BlobConfig, task: BlobTask, noise_levels=None,
         for ci, cond in enumerate(conds):
             out[f"{cond}_{dst}"] = grid[grid_key][ci]
             out[f"{cond}_{dst}_sem"] = grid[grid_key + "_sem"][ci]
+            per_seed_key = grid_key + "_per_seed"
+            if per_seed_key in grid:
+                out[f"{cond}_{dst}_per_seed"] = grid[per_seed_key][ci]  # (K,S,T)
     # per-prototype logits over training: (K, 8, T) per condition (rule 0..5, exc 6..7)
     if "prototype_logits" in grid:
         for ci, cond in enumerate(conds):
