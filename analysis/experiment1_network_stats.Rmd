@@ -1,0 +1,135 @@
+---
+title: "Experiment 1 -- network statistics"
+output: html_document
+date: "2026-08-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(sjPlot)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+```
+
+
+## Helper functions
+```{r define model functions, include=FALSE}
+my_tab_model <- function(model){
+  tab_model(model,
+          df.method = "satterthwaite",
+          show.stat = TRUE,
+          CSS = list(css.tdata = 'padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm;'),
+          transform = NULL,
+          string.stat = "z",
+          string.p = "p > |t|",
+          show.re.var = FALSE,
+          show.icc = FALSE,
+          show.r2 = FALSE,
+          wrap.labels = 100,
+          show.ngroups = FALSE,
+          show.obs = FALSE)
+}
+
+scale_this <- function(x){
+  (x - mean(x, na.rm=TRUE)) / sd(x, na.rm=TRUE)
+}
+
+# tidy printer for a paired contrast on network-level means
+paired_report <- function(a, b, label){
+  d  <- a - b
+  tt <- t.test(a, b, paired = TRUE)
+  sprintf("%-46s %+.4f [%+.4f, %+.4f], t(%d) = %.2f, p = %.3g, d_z = %.2f",
+          label, mean(d), tt$conf.int[1], tt$conf.int[2],
+          tt$parameter, tt$statistic, tt$p.value, mean(d) / sd(d))
+}
+```
+
+### Loading data
+```{r read data, echo=T, warning=FALSE}
+net_test <- read_csv("../data/net_exp1_test.csv", show_col_types = FALSE) %>%
+  mutate(curriculum = relevel(factor(curriculum), ref = "No Curriculum"),
+         stimType   = factor(stimType, levels = c("Rule", "Exception")),
+         seed       = factor(seed))
+
+net_learn <- read_csv("../data/net_exp1_learning.csv", show_col_types = FALSE) %>%
+  mutate(curriculum = relevel(factor(curriculum), ref = "No Curriculum"),
+         stimType   = factor(stimType, levels = c("Rule", "Exception")),
+         seed       = factor(seed))
+
+n_distinct(net_test$seed)   # networks
+```
+
+### Test model (Fig. 2B)
+```{r test mod}
+test_mod <- lmer(p_correct ~ curriculum * stimType + (1 | seed),
+                 data = net_test,
+                 contrasts = list(stimType = "contr.sum"))
+my_tab_model(test_mod)
+```
+
+```{r test contrasts}
+# curriculum effects, separately for rule and exception stimuli
+emm <- emmeans(test_mod, ~ curriculum | stimType)
+contrast(emm, method = "trt.vs.ctrl", ref = "No Curriculum", infer = TRUE)
+
+# the persistent simplicity bias: rule vs exception within each curriculum
+pairs(emmeans(test_mod, ~ stimType | curriculum))
+```
+
+```{r test contrasts paired}
+cellm <- net_test %>%
+  group_by(seed, curriculum, stimType) %>%
+  summarise(p = mean(p_correct), .groups = "drop")
+
+get <- function(cur, st) cellm %>%
+  filter(curriculum == cur, stimType == st) %>% arrange(seed) %>% pull(p)
+
+cat(paired_report(get("Simple to Complex","Exception"), get("No Curriculum","Exception"),
+                  "Exception: simple-to-complex - no curriculum"), "\n")
+cat(paired_report(get("Simple to Complex","Rule"),      get("No Curriculum","Rule"),
+                  "Rule: simple-to-complex - no curriculum"), "\n")
+cat(paired_report(get("Complex to Simple","Exception"), get("No Curriculum","Exception"),
+                  "Exception: complex-to-simple - no curriculum"), "\n")
+cat(paired_report(get("Complex to Simple","Rule"),      get("No Curriculum","Rule"),
+                  "Rule: complex-to-simple - no curriculum"), "\n")
+cat(paired_report(get("No Curriculum","Rule"),          get("No Curriculum","Exception"),
+                  "No curriculum: rule - exception (at 30k steps)"), "\n")
+```
+
+### Learning phase, no-curriculum condition (Fig. 2A)
+
+```{r learning order}
+curve <- net_learn %>%
+  filter(curriculum == "No Curriculum") %>%
+  group_by(seed, stimType, step) %>%
+  summarise(p = mean(p_correct), .groups = "drop")
+
+CRIT <- 0.60          # robustness: repeat with 0.70 and 0.75
+reach <- curve %>%
+  filter(p >= CRIT) %>%
+  group_by(seed, stimType) %>%
+  summarise(step_crit = min(step), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = stimType, values_from = step_crit) %>%
+  filter(!is.na(Rule), !is.na(Exception))
+
+nrow(reach)                                   # networks reaching criterion on both
+summary(reach$Rule); summary(reach$Exception)
+t.test(reach$Exception, reach$Rule, paired = TRUE)
+# wilcox.test(reach$Exception, reach$Rule, paired = TRUE)
+```
+
+```{r learning dip}
+dip <- curve %>%
+  filter(stimType == "Exception") %>%
+  group_by(seed) %>%
+  slice_min(p, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+t.test(dip$p, mu = 0.5)                       # exception accuracy vs chance
+mean(dip$p < 0.5)                             # proportion of networks dipping
+median(dip$step)                              # when the minimum occurs
+```
