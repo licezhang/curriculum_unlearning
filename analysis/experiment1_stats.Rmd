@@ -1,5 +1,5 @@
 ---
-title: "simplicity_modeling"
+title: "Experiment 1: benefit of simple-to-complex curricula"
 output: html_document
 date: "2026-02-16"
 ---
@@ -13,7 +13,6 @@ library(lme4)
 library(emmeans)
 ```
 
-## Helper functions
 ```{r define model functions, include=FALSE}
 my_tab_model <- function(model){
   tab_model(model, 
@@ -46,10 +45,12 @@ scale_this <- function(x){
 ```
 
 ### Loading Data
-All continuous variables are z-scored
+All continuous variables are z-scored, curriculum is coded as a categorical predictor using treatment (dummy) coding and "No Curriculum" as the reference condition.
 ```{r read data, echo=T, results='hide', warning=FALSE}
 train_data_ctrl <- read_csv("../data/exp1_learning_control.csv",show_col_types = FALSE)
 train_data_ctrl$trial_z <- scale_this(train_data_ctrl$trialNum)
+
+test_data_ctrl <- read_csv("../data/exp1_test_control.csv",show_col_types = FALSE)
 
 test_data <- read_csv("../data/exp1_test.csv",show_col_types = FALSE)
 test_data$trial_z <- scale_this(test_data$trialNum)
@@ -59,7 +60,8 @@ test_data$curriculum <- relevel(
 )
 ```
 
-### Train model 
+### Humans demonstrate simplicity biases
+We first examine learning and test performance in the absence of a curriculum.
 ```{r train mod }
 train_ctrl_mod = glmer(correct ~ stimType * trial_z + (1 | subjectId), 
       data = train_data_ctrl,
@@ -71,9 +73,21 @@ train_ctrl_mod = glmer(correct ~ stimType * trial_z + (1 | subjectId),
       contrasts = list(
       stimType="contr.sum"))
 my_tab_model(train_ctrl_mod)
+
+test_ctrl_mod = glmer(correct ~ stimType + (stimType | subjectId), 
+                  data = test_data_ctrl,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = "bobyqa",
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  stimType="contr.sum"))
+my_tab_model(test_ctrl_mod)
 ```
 
-### Test model 
+### Humans benefit from simple-to-complex curricula
+We next test whether curriculum condition affects test performance and whether the effect of curriculum differs by stimulus type.
 ```{r test mod}
 test_mod = glmer(correct ~ curriculum * stimType + (stimType | subjectId), 
                   data = test_data,
@@ -87,12 +101,35 @@ test_mod = glmer(correct ~ curriculum * stimType + (stimType | subjectId),
 
 my_tab_model(test_mod)
 
-
-stim_by_curriculum <- emmeans(
+# Overall contrasts
+emm_overall <- emmeans(
   test_mod,
-  ~ curriculum | stimType
+  ~ curriculum,
+  weights = "proportional"
 )
 
-pairs(stim_by_curriculum)
+overall_contrasts <- contrast(
+  emm_overall,
+  method = list(
+    "STC - No Curriculum" = c(-1, 0, 1),
+    "CTS - No Curriculum" = c(-1, 1, 0)
+  )
+)
+
+summary(overall_contrasts, infer = c(TRUE, TRUE))
+
+
+# Contrasts separately for exceptions and rules
+emm <- emmeans(test_mod, ~ curriculum | stimType)
+
+stim_contrasts <- contrast(
+  emm,
+  method = list(
+    "STC - No Curriculum" = c(-1, 0, 1),
+    "CTS - No Curriculum" = c(-1, 1, 0)
+  )
+)
+
+summary(stim_contrasts, infer = c(TRUE, TRUE))
 ```
 
