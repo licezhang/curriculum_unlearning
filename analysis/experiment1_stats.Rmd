@@ -11,6 +11,7 @@ library(ggplot2)
 library(sjPlot)
 library(lme4)
 library(emmeans)
+library(dplyr)
 ```
 
 ```{r define model functions, include=FALSE}
@@ -84,6 +85,18 @@ test_ctrl_mod = glmer(correct ~ stimType + (stimType | subjectId),
                   contrasts = list(
                   stimType="contr.sum"))
 my_tab_model(test_ctrl_mod)
+
+# Per-subject exception accuracy in the first block (blockNum is 0-indexed)
+exc_block1 <- train_data_ctrl %>%
+  filter(stimType == "Exception", blockNum == min(blockNum)) %>%
+  group_by(subjectId) %>%
+  summarise(acc = mean(correct), .groups = "drop")
+
+# One-sample t-test against chance
+t.test(exc_block1$acc, mu = 0.5)
+
+# Cohen's d
+(mean(exc_block1$acc) - 0.5) / sd(exc_block1$acc)
 ```
 
 ### Humans benefit from simple-to-complex curricula

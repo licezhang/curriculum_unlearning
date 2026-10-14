@@ -553,6 +553,28 @@ stimType1
 </td>
 </tr>
 </table>
+<pre class="r"><code># Per-subject exception accuracy in the first block (blockNum is 0-indexed)
+exc_block1 &lt;- train_data_ctrl %&gt;%
+  filter(stimType == &quot;Exception&quot;, blockNum == min(blockNum)) %&gt;%
+  group_by(subjectId) %&gt;%
+  summarise(acc = mean(correct), .groups = &quot;drop&quot;)
+
+# One-sample t-test against chance
+t.test(exc_block1$acc, mu = 0.5)</code></pre>
+<pre><code>## 
+##  One Sample t-test
+## 
+## data:  exc_block1$acc
+## t = -2.7877, df = 62, p-value = 0.007038
+## alternative hypothesis: true mean is not equal to 0.5
+## 95 percent confidence interval:
+##  0.3891217 0.4817297
+## sample estimates:
+## mean of x 
+## 0.4354257</code></pre>
+<pre class="r"><code># Cohen&#39;s d
+(mean(exc_block1$acc) - 0.5) / sd(exc_block1$acc)</code></pre>
+<pre><code>## [1] -0.3512188</code></pre>
 </div>
 <div id="humans-benefit-from-simple-to-complex-curricula" class="section level3">
 <h3>Humans benefit from simple-to-complex curricula</h3>
