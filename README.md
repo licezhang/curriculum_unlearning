@@ -48,10 +48,8 @@ analysis/
   experiment2_stats.Rmd   human trial-level mixed models, Experiment 2
 data/                     the five human CSVs the pipeline reads (Git LFS)
 results/
-  main_text_stats.json    every reported statistic: the prose, the provenance, and the
-                          values as fields (b, ci_lo, ci_hi, z, p, n, ...). Written by the
-                          last cell of analysis/paper_figures.ipynb, together with a
-                          human-readable main_text_stats.md that is not committed.
+  main_text_stats.json    every statistic reported from the networks: the prose, the
+                          provenance, and the values as fields (b, ci_lo, ci_hi, z, p, n)
   cache/*.npz             cached network outputs (see above)
   sweep_exp1*.csv         sweep results
   permutation_cache.npz   the human-network correspondence permutation test
@@ -62,18 +60,44 @@ task/                     the experiment code participants ran
 ## Where the numbers come from
 
 `results/main_text_stats.json` is the source of truth for everything reported from the
-**networks** and for all descriptive and figure quantities. Each row carries a key, the
-statistic as prose, its provenance, and the values as fields, so a number can be looked up
-rather than parsed. It is written by the **last code cell of
-`analysis/paper_figures.ipynb`**, which also writes a human-readable `main_text_stats.md`
-beside it for reading during drafting; that file is regenerated on every run and is not
-committed.
+**networks**, and for the descriptive and figure quantities on both sides. Each row carries
+a key, the statistic as prose, its provenance, and the values as fields, so a number can be
+looked up rather than parsed. It is written by the **last code cell of
+`analysis/paper_figures.ipynb`**.
 
-Human **trial-level** mixed models are fitted in R (`analysis/experiment*_stats.Rmd`) and
-reported separately. This split is deliberate: no Python GLMM we tested reproduces
-`lme4`/`GLMMadaptive` on these data — the variational implementation in `statsmodels`
-inflates *z* roughly threefold, and a cluster-robust GLM returns marginal rather than
-conditional coefficients. See §5 of `METHODS_NOTES.md`.
+The **human trial-level** statistics are produced separately, in R — see below.
+
+## Human statistics
+
+The mixed models on human trial-level data are fitted in R:
+
+```
+analysis/experiment1_stats.Rmd    Experiment 1: learning and test
+analysis/experiment2_stats.Rmd    Experiment 2: pretraining, learning, test, and the
+                                  reaction-time measure of selective attention
+```
+
+Each knits to the `.html` beside it, which holds the model output as reported. They read
+per-condition CSVs from `data/`, not the raw files:
+
+```
+exp1_learning_control.csv   exp1_test.csv            exp1_test_control.csv
+exp2_learning_control.csv   exp2_learning_curriculum.csv
+exp2_pretraining.csv        exp2_test.csv
+exp2_learning_control_smrt.csv   exp2_learning_curriculum_smrt.csv
+exp2_pretraining_smrt.csv        exp2_test_smrt.csv
+```
+
+All eleven are committed, so the `.Rmd` files knit as they stand. Nine of them are written
+by `analysis/experiment1.ipynb` and `analysis/experiment2.ipynb`, which filter and bin the
+raw trial data and compute the switch–match reaction times. The remaining two,
+`exp1_test.csv` and `exp1_test_control.csv`, have their write lines commented out in
+`experiment1.ipynb`: the code that produced them is there but disabled, so regenerating
+them means uncommenting it.
+
+Statistics quoted in the paper as log-odds come from these models. Statistics quoted as
+differences in accuracy come from the networks, via `main_text_stats.json`. The two are on
+different scales and are not directly comparable in magnitude.
 
 ## Data
 
