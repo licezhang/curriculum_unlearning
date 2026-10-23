@@ -46,11 +46,12 @@ analysis/
   sweep_benefit.py        the curriculum benefit across that grid (Figure 3e, f)
   experiment1_stats.Rmd   human trial-level mixed models, Experiment 1
   experiment2_stats.Rmd   human trial-level mixed models, Experiment 2
-  METHODS_NOTES.md        decisions that are load-bearing or easy to get wrong
 data/                     the five human CSVs the pipeline reads (Git LFS)
 results/
-  main_text_stats.md      every reported statistic, as prose, grouped by figure
-  main_text_stats.json    the same with structured fields (b, ci, z, p, n, ...)
+  main_text_stats.json    every reported statistic: the prose, the provenance, and the
+                          values as fields (b, ci_lo, ci_hi, z, p, n, ...). Written by the
+                          last cell of analysis/paper_figures.ipynb, together with a
+                          human-readable main_text_stats.md that is not committed.
   cache/*.npz             cached network outputs (see above)
   sweep_exp1*.csv         sweep results
   permutation_cache.npz   the human-network correspondence permutation test
@@ -60,10 +61,13 @@ task/                     the experiment code participants ran
 
 ## Where the numbers come from
 
-`results/main_text_stats.md` is the source of truth for everything reported from the
-**networks** and for all descriptive and figure quantities. Each row has a key, the
-statistic as prose, and its provenance. `main_text_stats.json` carries the same rows with
-the values as fields, so a number can be looked up rather than parsed.
+`results/main_text_stats.json` is the source of truth for everything reported from the
+**networks** and for all descriptive and figure quantities. Each row carries a key, the
+statistic as prose, its provenance, and the values as fields, so a number can be looked up
+rather than parsed. It is written by the **last code cell of
+`analysis/paper_figures.ipynb`**, which also writes a human-readable `main_text_stats.md`
+beside it for reading during drafting; that file is regenerated on every run and is not
+committed.
 
 Human **trial-level** mixed models are fitted in R (`analysis/experiment*_stats.Rmd`) and
 reported separately. This split is deliberate: no Python GLMM we tested reproduces
@@ -98,7 +102,8 @@ read from `results/sweep_exp1*.csv`.
   trial sequence in their own curriculum condition. The model has no freedom over its
   training distribution, so condition differences cannot come from how the training stream
   was built.
-- `METHODS_NOTES.md` records the choices that matter and the ones that are easy to get
-  wrong: where the noise enters, why the initialisation scale is fixed rather than fitted,
-  which quantities marginalise noise and which do not, and several claims from earlier
-  versions of this project that do **not** survive.
+- The choices that are easy to get wrong are documented where they are made: see the
+  docstrings in `paper_lib.py` for where the noise enters, which quantities marginalise it
+  and which do not, why trials are binned by presented trial number, and why the test
+  models use a random slope. `reconstruct_sweep.py` explains why the initialisation scale
+  is fixed rather than fitted.
