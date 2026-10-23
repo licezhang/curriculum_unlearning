@@ -1,1 +1,5 @@
+# The human data files are large and belong in LFS.
 *.csv filter=lfs diff=lfs merge=lfs -text
+# Derived results are small, and storing them in LFS means a clone without git-lfs gets
+# pointer files that pandas reads as data. Keep them as ordinary blobs.
+results/*.csv !filter !diff !merge text
