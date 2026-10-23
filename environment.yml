@@ -1,0 +1,30 @@
+# Environment that produced the reported numbers.
+#
+#   conda env create -f environment.yml
+#   conda activate curriculum-unlearning
+#
+# The pinned versions matter in one place: `statsmodels` is used for the mixed models and
+# the GLMs, and estimator behaviour has differed across versions. The human trial-level
+# models are fitted in R (see analysis/*.Rmd), not here.
+#
+# A GPU is optional. It is used only by `run.py model`, which retrains the networks; the
+# default `run.py figures` path replays cached outputs on CPU. Training was done on an
+# RTX 3090 with CUDA 11.8; results are seeded and reproduce exactly on the same hardware,
+# with small floating-point differences expected across other GPUs.
+name: curriculum-unlearning
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy=1.26.4
+  - pandas=2.2.1
+  - scipy=1.13.0
+  - matplotlib=3.9.2
+  - statsmodels=0.14.6
+  - pillow=10.3.0
+  - pip
+  - pip:
+      - torch==2.5.1
+      - cairosvg==2.9.1
