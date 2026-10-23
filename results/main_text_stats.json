@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-23T16:02:35",
+ "generated": "2026-10-23T16:41:38",
  "rows": [
   {
    "key": "fig2.transition_or",
@@ -597,7 +597,7 @@
   },
   {
    "key": "fig2b.net_test_omnibus.rule_plus_exceptions",
-   "text": "networks at test, proportion following the optimal rule + exceptions strategy: Complex to Simple 29.2% (21/72), No Curriculum 41.3% (26/63), Simple to Complex 51.4% (37/72); chi2(2, N = 207) = 7.39, p = 0.0248, Cramer's V = 0.19 (no continuity correction; smallest expected count 25.6). Single response draw, seed 1 -- see fig2b.net_test_seed_stability.",
+   "text": "networks at test, proportion following the optimal rule + exceptions strategy: Complex to Simple 29.2% (21/72), No Curriculum 41.3% (26/63), Simple to Complex 51.4% (37/72); chi2(2, N = 207) = 7.39, p = 0.0248, Cramer's V = 0.19 (no continuity correction; smallest expected count 25.6). Single response draw, seed 1.",
    "source": "python:paper_figures.ipynb",
    "chi2": 7.390710552513689,
    "dof": 2.0,
@@ -612,7 +612,7 @@
   },
   {
    "key": "fig2b.net_test_omnibus.rule_only",
-   "text": "networks at test, proportion following the rule-only strategy: Complex to Simple 58.3% (42/72), No Curriculum 39.7% (25/63), Simple to Complex 19.4% (14/72); chi2(2, N = 207) = 22.87, p = 1.08e-05, Cramer's V = 0.33 (no continuity correction; smallest expected count 24.7). Single response draw, seed 1 -- see fig2b.net_test_seed_stability.",
+   "text": "networks at test, proportion following the rule-only strategy: Complex to Simple 58.3% (42/72), No Curriculum 39.7% (25/63), Simple to Complex 19.4% (14/72); chi2(2, N = 207) = 22.87, p = 1.08e-05, Cramer's V = 0.33 (no continuity correction; smallest expected count 24.7). Single response draw, seed 1.",
    "source": "python:paper_figures.ipynb",
    "chi2": 22.869614512471653,
    "dof": 2.0,
@@ -627,7 +627,7 @@
   },
   {
    "key": "fig2b.net_test_omnibus.unsystematic",
-   "text": "networks at test, proportion following random, constant, or another one-dimensional rule: Complex to Simple 12.5% (9/72), No Curriculum 19.0% (12/63), Simple to Complex 29.2% (21/72); chi2(2, N = 207) = 6.27, p = 0.0435, Cramer's V = 0.17 (no continuity correction; smallest expected count 12.8). Single response draw, seed 1 -- see fig2b.net_test_seed_stability.",
+   "text": "networks at test, proportion following random, constant, or another one-dimensional rule: Complex to Simple 12.5% (9/72), No Curriculum 19.0% (12/63), Simple to Complex 29.2% (21/72); chi2(2, N = 207) = 6.27, p = 0.0435, Cramer's V = 0.17 (no continuity correction; smallest expected count 12.8). Single response draw, seed 1.",
    "source": "python:paper_figures.ipynb",
    "chi2": 6.269526901669759,
    "dof": 2.0,
@@ -639,14 +639,6 @@
     19.047619047619047,
     29.166666666666668
    ]
-  },
-  {
-   "key": "fig2b.net_test_seed_stability",
-   "text": "the network test-phase classification rests on 16 sampled binary responses per network (two per stimulus, matching the human trial count), so its proportions move with the sampling seed. Over 20 seeds the omnibus test is significant at .05 in rule plus exceptions 12/20 seeds (median p = 0.0227); rule only 18/20 seeds (median p = 0.000867); unsystematic 2/20 seeds (median p = 0.413). Pairwise contrasts are less stable still and are not reported. Block 5, with 48 trials, is significant in 20/20 seeds for every outcome.",
-   "source": "python:paper_figures.ipynb",
-   "n_sig_rule_plus_exceptions": 12.0,
-   "n_sig_rule_only": 18.0,
-   "n_sig_unsystematic": 2.0
   },
   {
    "key": "fig3.test.humans.anti_curriculum",
@@ -1685,6 +1677,14 @@
    "n": 1026.0
   },
   {
+   "key": "fig6.state_interaction_lrt",
+   "text": "fraction in rule + exceptions at block 5, pretraining x curriculum interaction, likelihood-ratio test: chi2(1) = 6.29, p = 0.0121 (the model with the interaction against the model without). Same fact as the Wald z in fig6.state_interaction, whose square is 6.27.",
+   "source": "python:paper_figures.ipynb",
+   "chi2": 6.29356740153753,
+   "df": 1.0,
+   "p": 0.01211769154783017
+  },
+  {
    "key": "fig6.state_interaction",
    "text": "fraction in rule + exceptions at block 5, pretraining x curriculum interaction: b = -0.686, z = -2.50, p = 0.0123",
    "source": "python:paper_figures.ipynb",
@@ -1772,75 +1772,6 @@
    "n": 259.0
   },
   {
-   "key": "mech.interaction.pr_end",
-   "text": "final participation ratio, pretraining x curriculum interaction: b = -0.042, p = 0.255 (NOT significant -- the brackets in the figure mark simple effects, not this)",
-   "source": "python:paper_figures.ipynb",
-   "b": -0.042411373471840576,
-   "p": 0.25502949665770147
-  },
-  {
-   "key": "mech.simple.pr_end.1-D",
-   "text": "final participation ratio, 1-D pretraining, curriculum minus none: +0.062 (2.429 -> 2.490), t = +3.92, p = 0.000101",
-   "source": "python:paper_figures.ipynb",
-   "delta": 0.061959266662597656,
-   "t": 3.9173913000113005,
-   "p": 0.00010146132864690647
-  },
-  {
-   "key": "mech.simple.pr_end.XOR",
-   "text": "final participation ratio, XOR pretraining, curriculum minus none: +0.020 (2.879 -> 2.899), t = +0.57, p = 0.569",
-   "source": "python:paper_figures.ipynb",
-   "delta": 0.019547700881958008,
-   "t": 0.5698671224251396,
-   "p": 0.5690245460854144
-  },
-  {
-   "key": "mech.interaction.sep",
-   "text": "exception-axis separation, pretraining x curriculum interaction: b = -0.301, p = 0.132 (NOT significant -- the brackets in the figure mark simple effects, not this)",
-   "source": "python:paper_figures.ipynb",
-   "b": -0.3005576201787906,
-   "p": 0.13224858378230586
-  },
-  {
-   "key": "mech.simple.sep.1-D",
-   "text": "exception-axis separation, 1-D pretraining, curriculum minus none: +0.764 (5.768 -> 6.532), t = +6.47, p = 2.27e-10",
-   "source": "python:paper_figures.ipynb",
-   "delta": 0.7638001441955566,
-   "t": 6.4702095770652415,
-   "p": 2.2673103435547334e-10
-  },
-  {
-   "key": "mech.simple.sep.XOR",
-   "text": "exception-axis separation, XOR pretraining, curriculum minus none: +0.463 (6.502 -> 6.965), t = +2.85, p = 0.00449",
-   "source": "python:paper_figures.ipynb",
-   "delta": 0.4632434844970703,
-   "t": 2.8542586458715973,
-   "p": 0.004493208884793595
-  },
-  {
-   "key": "mech.interaction.lsep",
-   "text": "exception logit separation, pretraining x curriculum interaction: b = -2.455, p = 0.0625 (NOT significant -- the brackets in the figure mark simple effects, not this)",
-   "source": "python:paper_figures.ipynb",
-   "b": -2.45460148049032,
-   "p": 0.0624765497395808
-  },
-  {
-   "key": "mech.simple.lsep.1-D",
-   "text": "exception logit separation, 1-D pretraining, curriculum minus none: +5.346 (16.338 -> 21.683), t = +6.89, p = 1.59e-11",
-   "source": "python:paper_figures.ipynb",
-   "delta": 5.345762252807617,
-   "t": 6.8927744296494895,
-   "p": 1.586848519644381e-11
-  },
-  {
-   "key": "mech.simple.lsep.XOR",
-   "text": "exception logit separation, XOR pretraining, curriculum minus none: +2.891 (21.817 -> 24.708), t = +2.69, p = 0.00736",
-   "source": "python:paper_figures.ipynb",
-   "delta": 2.891162872314453,
-   "t": 2.690934827168741,
-   "p": 0.007364462891168611
-  },
-  {
    "key": "net.config",
    "text": "yoked model: one network per participant (n = 207), trained by single-trial SGD on that participant's own 240-trial sequence. Swept learning rate, initialisation scale, hidden-activation noise, hidden width and lapse, scored on the human learning trajectories (56 block x condition x stimulus-type cells). Selected: hidden 32, lr 0.3, init 0.01, hnoise 1.0, lapse 0.3",
    "source": "python:paper_figures.ipynb",
@@ -1917,16 +1848,6 @@
    "rule_bins": 2.0,
    "exc_bins": 6.0,
    "p": 2.960544350673271e-17
-  },
-  {
-   "key": "net.perm_yoking",
-   "text": "state-sequence agreement between a network and its OWN participant is 0.366. Shuffling partners within condition gives 0.375 [0.352, 0.398], p = 0.7808 -- i.e. NOT better than a random partner in the same condition. Shuffling across the whole sample gives 0.318 [0.292, 0.343], p = 0.0002. The correspondence is carried by condition, not by yoking.",
-   "source": "python:paper_figures.ipynb",
-   "observed": 0.366120218579235,
-   "null_within": 0.37481074681238613,
-   "p_within": 0.7808,
-   "null_all": 0.3177360655737705,
-   "p_all": 0.0002
   },
   {
    "key": "net.perm_condition",
