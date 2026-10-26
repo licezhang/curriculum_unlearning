@@ -63,6 +63,8 @@ train_data_ctrl$trial_z <- scale_this(train_data_ctrl$totalTrialNum)
 
 test_data <- read_csv("../data/exp2_test.csv",show_col_types = FALSE)
 test_data$trial_z <- scale_this(test_data$trialNum)
+test_data$curriculum <- factor(test_data$curriculum,
+                               levels = c("Simple To Complex", "No Curriculum"))  
 
 pretrain_data_smrt <- read_csv("../data/exp2_pretraining_smrt.csv",show_col_types = FALSE)
 pretrain_data_smrt$bin_z <- scale_this(pretrain_data_smrt$bin)
@@ -70,6 +72,8 @@ pretrain_data_smrt$bin_z <- scale_this(pretrain_data_smrt$bin)
 test_data_smrt <- read_csv("../data/exp2_test_smrt.csv",show_col_types = FALSE)
 test_data_smrt$pretrain_acc_z <- scale_this(test_data_smrt$pretrain_acc)
 test_data_smrt$mean_sa_z <- scale_this(test_data_smrt$selective_attention)
+test_data_smrt$curriculum <- factor(test_data_smrt$curriculum,
+                               levels = c("Simple To Complex", "No Curriculum"))  
 
 learning_data_curriculum_smrt <- read_csv("../data/exp2_learning_curriculum_smrt.csv",show_col_types = FALSE)
 learning_data_curriculum_smrt$mean_sa_z <- scale_this(learning_data_curriculum_smrt$selective_attention)
@@ -141,21 +145,6 @@ test_mod = glmer(correct ~ curriculum * pretraining * stimType + (stimType | sub
                   stimType="contr.sum"))
 my_tab_model(test_mod)
 
-# Overall STC benefit, averaging across pretraining and stimulus type
-emm_overall <- emmeans(
-  test_mod,
-  ~ curriculum,
-  weights = "proportional"
-)
-
-overall_contrast <- contrast(
-  emm_overall,
-  method = list(
-    "STC - No Curriculum" = c(-1, 1)
-  )
-)
-summary(overall_contrast, infer = c(TRUE, TRUE))
-
 # STC benefit separately for rules and exceptions,
 # averaging across pretraining
 emm_stim <- emmeans(
@@ -167,181 +156,24 @@ emm_stim <- emmeans(
 stim_contrasts <- contrast(
   emm_stim,
   method = list(
-    "STC - No Curriculum" = c(-1, 1)
+    "STC - No Curriculum" = c(1, -1)
   )
 )
 summary(stim_contrasts, infer = c(TRUE, TRUE))
-
-# Overall pretraining effect, averaging across curriculum and stimType
-emm_pretrain <- emmeans(
-  test_mod,
-  ~ pretraining,
-  weights = "proportional"
-)
-
-pretrain_contrast <- contrast(
-  emm_pretrain,
-  method = list(
-    "Simple - XOR" = c(1, -1)
-  )
-)
-summary(pretrain_contrast, infer = c(TRUE, TRUE))
-
-# Does the STC benefit differ by pretraining condition?
-# (curriculum x pretraining interaction, averaging across stimType)
-emm_curr_pretrain <- emmeans(
-  test_mod,
-  ~ curriculum * pretraining,
-  weights = "proportional"
-)
-
-curr_pretrain_contrast <- contrast(
-  emm_curr_pretrain,
-  method = list(
-    "(STC - No Curriculum | Simple) - (STC - No Curriculum | XOR)" = c(-1, 1, 1, -1)
-  )
-)
-summary(curr_pretrain_contrast, infer = c(TRUE, TRUE))
-
-# Overall stimType effect (rules vs. exceptions), averaging across
-# curriculum and pretraining
-emm_stimtype <- emmeans(
-  test_mod,
-  ~ stimType,
-  weights = "proportional"
-)
-
-stimtype_contrast <- contrast(
-  emm_stimtype,
-  method = list(
-    "Exception - Rule" = c(1, -1)
-  )
-)
-summary(stimtype_contrast, infer = c(TRUE, TRUE))
-
-# Does the rule/exception accuracy gap differ by pretraining condition?
-# (pretraining x stimType interaction, averaging across curriculum)
-emm_pretrain_stim <- emmeans(
-  test_mod,
-  ~ pretraining * stimType,
-  weights = "proportional"
-)
-
-pretrain_stim_contrast <- contrast(
-  emm_pretrain_stim,
-  method = list(
-    "(Exception - Rule | Simple) - (Exception - Rule | XOR)" = c(1, -1, -1, 1)
-  )
-)
-summary(pretrain_stim_contrast, infer = c(TRUE, TRUE))
-
-# Is the curriculum x pretraining interaction itself larger for exceptions
-# than rules? (full curriculum x pretraining x stimType interaction)
-emm_full <- emmeans(
-  test_mod,
-  ~ curriculum * pretraining * stimType
-)
-
-threeway_contrast <- contrast(
-  emm_full,
-  method = list(
-    "(STC-NoCurr|Simple - STC-NoCurr|XOR): Exception vs. Rule" =
-      c(-1, 1, 1, -1, 1, -1, -1, 1)
-  )
-)
-summary(threeway_contrast, infer = c(TRUE, TRUE))
-
-# Unpacking that interaction: is the STC benefit bigger for simple- than
-# XOR-pretrained participants, tested separately within each stimulus type?
-# (grid order for emm_full: NoCurr-Simple-Exc, STC-Simple-Exc, NoCurr-XOR-Exc,
-#  STC-XOR-Exc, NoCurr-Simple-Rule, STC-Simple-Rule, NoCurr-XOR-Rule, STC-XOR-Rule)
-curr_x_pretrain_by_stim <- contrast(
-  emm_full,
-  method = list(
-    "(STC-NoCurr|Simple) - (STC-NoCurr|XOR), Exception only" =
-      c(-1, 1, 1, -1, 0, 0, 0, 0),
-    "(STC-NoCurr|Simple) - (STC-NoCurr|XOR), Rule only" =
-      c(0, 0, 0, 0, -1, 1, 1, -1)
-  )
-)
-summary(curr_x_pretrain_by_stim, infer = c(TRUE, TRUE))
-
-# STC benefit broken down by pretraining and stimulus type
-emm_curr_by_pretrain_stim <- emmeans(
-  test_mod,
-  ~ curriculum | pretraining * stimType
-)
-
-curr_by_pretrain_stim_contrasts <- contrast(
-  emm_curr_by_pretrain_stim,
-  method = list(
-    "STC - No Curriculum" = c(-1, 1)
-  )
-)
-summary(curr_by_pretrain_stim_contrasts, infer = c(TRUE, TRUE))
 ```
 
 ### Pretraining smrt
 Does selective attention to the relevant feature grow relative to the irrelevant features over the course of simple pretraining?
 ```{r pretrain smrt}
-pretrain_smrt_mod <- lm(SMRT ~ feature * bin_z,
+pretrain_smrt_mod <- lm(selective_attention ~ feature * bin_z,
                         data = pretrain_data_smrt,
                         contrasts = list(feature = "contr.sum"))
 my_tab_model(pretrain_smrt_mod)
-
-# Relevant vs. Irrelevant feature, overall
-emm_feat <- emmeans(pretrain_smrt_mod, ~ feature)
-feat_contrast <- contrast(
-  emm_feat,
-  method = list("Relevant - Irrelevant" = c(-1, 1))
-)
-summary(feat_contrast, infer = c(TRUE, TRUE))
-
-# Does the Relevant - Irrelevant gap grow over the course of pretraining?
-et_feat <- emtrends(pretrain_smrt_mod, ~ feature, var = "bin_z")
-feat_slope_contrast <- contrast(
-  et_feat,
-  method = list("Relevant - Irrelevant" = c(-1, 1))
-)
-summary(feat_slope_contrast, infer = c(TRUE, TRUE))
-```
-
-### Train model smrt
-Does selective attention (compression) during pretraining predict learning-phase accuracy, for curriculum vs. control participants?
-```{r train mod smrt }
-
-train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z * stimType | subjectId), 
-                  data = learning_data_curriculum_smrt,
-                  family = binomial,
-                  control = glmerControl(
-                    optimizer = "bobyqa",
-                    optCtrl = list(maxfun = 2e6)
-                  ),
-                  contrasts = list(
-                  stimType="contr.sum"))
-
-my_tab_model(train_curr_smrt_mod)
-summary(train_curr_smrt_mod)
-
-train_ctrl_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z * stimType | subjectId), 
-                  data = learning_data_control_smrt,
-                  family = binomial,
-                  control = glmerControl(
-                    optimizer = "bobyqa",
-                    optCtrl = list(maxfun = 2e6)
-                  ),
-                  contrasts = list(
-                  stimType="contr.sum"))
-
-my_tab_model(train_ctrl_smrt_mod)
-summary(train_ctrl_smrt_mod)
 ```
 
 ### Test model smrt
 Does selective attention (compression) during pretraining predict who benefits most from the curriculum at test, controlling for pretraining accuracy?
 ```{r test mod smrt }
-cor(test_data_smrt$mean_sa_z, test_data_smrt$pretrain_acc_z)
-
 test_smrt_mod = glmer(correct ~ curriculum * mean_sa_z * stimType + pretrain_acc_z + (stimType | subjectId),
                   data = test_data_smrt,
                   family = binomial,
@@ -354,47 +186,4 @@ test_smrt_mod = glmer(correct ~ curriculum * mean_sa_z * stimType + pretrain_acc
                   stimType="contr.sum"))
 
 my_tab_model(test_smrt_mod)
-
-# Overall mean_sa_z (compression) slope, averaging across curriculum and
-# stimType -- proportional weights needed because stimType is unbalanced
-et_overall_sa <- emtrends(
-  test_smrt_mod,
-  ~ 1,
-  var = "mean_sa_z",
-  weights = "proportional"
-)
-summary(et_overall_sa, infer = c(TRUE, TRUE))
-
-# Does the curriculum benefit's dependence on mean_sa_z (compression) differ
-# by curriculum condition, averaging across stimType?
-et_curr_sa <- emtrends(
-  test_smrt_mod,
-  ~ curriculum,
-  var = "mean_sa_z",
-  weights = "proportional"
-)
-
-curr_sa_contrast <- contrast(
-  et_curr_sa,
-  method = list(
-    "STC - No Curriculum" = c(-1, 1)
-  )
-)
-summary(curr_sa_contrast, infer = c(TRUE, TRUE))
-
-# Is that curriculum x mean_sa_z slope-difference itself larger for
-# exception stimuli than rule stimuli?
-et_curr_sa_stim <- emtrends(
-  test_smrt_mod,
-  ~ curriculum * stimType,
-  var = "mean_sa_z"
-)
-
-curr_sa_stim_contrast <- contrast(
-  et_curr_sa_stim,
-  method = list(
-    "(STC-NoCurr slope | Exception) - (STC-NoCurr slope | Rule)" = c(-1, 1, 1, -1)
-  )
-)
-summary(curr_sa_stim_contrast, infer = c(TRUE, TRUE))
 ```

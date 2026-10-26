@@ -727,22 +727,6 @@ emm_overall &lt;- emmeans(
   weights = &quot;proportional&quot;
 )</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
-<pre class="r"><code>overall_contrasts &lt;- contrast(
-  emm_overall,
-  method = list(
-    &quot;STC - No Curriculum&quot; = c(-1, 0, 1),
-    &quot;CTS - No Curriculum&quot; = c(-1, 1, 0)
-  )
-)
-
-summary(overall_contrasts, infer = c(TRUE, TRUE))</code></pre>
-<pre><code>##  contrast            estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
-##  STC - No Curriculum    0.704 0.274 Inf     0.167     1.242   2.567  0.0103
-##  CTS - No Curriculum   -0.137 0.271 Inf    -0.668     0.395  -0.503  0.6147
-## 
-## Results are averaged over the levels of: stimType 
-## Results are given on the log odds ratio (not the response) scale. 
-## Confidence level used: 0.95</code></pre>
 <pre class="r"><code># Contrasts separately for exceptions and rules
 emm &lt;- emmeans(test_mod, ~ curriculum | stimType)
 

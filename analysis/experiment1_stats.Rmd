@@ -121,17 +121,6 @@ emm_overall <- emmeans(
   weights = "proportional"
 )
 
-overall_contrasts <- contrast(
-  emm_overall,
-  method = list(
-    "STC - No Curriculum" = c(-1, 0, 1),
-    "CTS - No Curriculum" = c(-1, 1, 0)
-  )
-)
-
-summary(overall_contrasts, infer = c(TRUE, TRUE))
-
-
 # Contrasts separately for exceptions and rules
 emm <- emmeans(test_mod, ~ curriculum | stimType)
 

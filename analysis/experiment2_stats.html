@@ -12,7 +12,7 @@
 
 <meta name="date" content="2026-02-16" />
 
-<title>simplicity_modeling</title>
+<title>Experiment 2: curriculum benefit depends on pretraining</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,19 +349,18 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">simplicity_modeling</h1>
+<h1 class="title toc-ignore">Experiment 2: curriculum benefit depends on
+pretraining</h1>
 <h4 class="date">2026-02-16</h4>
 
 </div>
 
 
-<div id="helper-functions" class="section level2">
-<h2>Helper functions</h2>
 <div id="loading-data" class="section level3">
 <h3>Loading Data</h3>
 <p>All continuous variables are z-scored</p>
-<pre class="r"><code>test_data &lt;- read_csv(&quot;../data/exp2_test.csv&quot;,show_col_types = FALSE)
-test_data$trial_z &lt;- scale_this(test_data$trialNum)
+<pre class="r"><code>pretrain_data &lt;- read_csv(&quot;../data/exp2_pretraining.csv&quot;,show_col_types = FALSE)
+pretrain_data$trial_z &lt;- scale_this(pretrain_data$trialNum)
 
 train_data_curr &lt;- read_csv(&quot;../data/exp2_learning_curriculum.csv&quot;,show_col_types = FALSE)
 train_data_curr$trial_z &lt;- scale_this(train_data_curr$totalTrialNum)
@@ -369,9 +368,19 @@ train_data_curr$trial_z &lt;- scale_this(train_data_curr$totalTrialNum)
 train_data_ctrl &lt;- read_csv(&quot;../data/exp2_learning_control.csv&quot;,show_col_types = FALSE)
 train_data_ctrl$trial_z &lt;- scale_this(train_data_ctrl$totalTrialNum)
 
+test_data &lt;- read_csv(&quot;../data/exp2_test.csv&quot;,show_col_types = FALSE)
+test_data$trial_z &lt;- scale_this(test_data$trialNum)
+test_data$curriculum &lt;- factor(test_data$curriculum,
+                               levels = c(&quot;Simple To Complex&quot;, &quot;No Curriculum&quot;))  
+
+pretrain_data_smrt &lt;- read_csv(&quot;../data/exp2_pretraining_smrt.csv&quot;,show_col_types = FALSE)
+pretrain_data_smrt$bin_z &lt;- scale_this(pretrain_data_smrt$bin)
+
 test_data_smrt &lt;- read_csv(&quot;../data/exp2_test_smrt.csv&quot;,show_col_types = FALSE)
 test_data_smrt$pretrain_acc_z &lt;- scale_this(test_data_smrt$pretrain_acc)
 test_data_smrt$mean_sa_z &lt;- scale_this(test_data_smrt$selective_attention)
+test_data_smrt$curriculum &lt;- factor(test_data_smrt$curriculum,
+                               levels = c(&quot;Simple To Complex&quot;, &quot;No Curriculum&quot;))  
 
 learning_data_curriculum_smrt &lt;- read_csv(&quot;../data/exp2_learning_curriculum_smrt.csv&quot;,show_col_types = FALSE)
 learning_data_curriculum_smrt$mean_sa_z &lt;- scale_this(learning_data_curriculum_smrt$selective_attention)
@@ -381,8 +390,120 @@ learning_data_control_smrt &lt;- read_csv(&quot;../data/exp2_learning_control_sm
 learning_data_control_smrt$mean_sa_z &lt;- scale_this(learning_data_control_smrt$selective_attention)
 learning_data_control_smrt$trial_z &lt;- scale_this(learning_data_control_smrt$trialNum)</code></pre>
 </div>
+<div id="pretrain-model" class="section level3">
+<h3>Pretrain model</h3>
+<p>Does pretraining accuracy improve differently over time for the
+simple vs. XOR pretraining conditions?</p>
+<pre class="r"><code>pretrain_mod = glmer(correct ~ pretraining * trial_z + (trial_z | subjectId), 
+                  data = pretrain_data,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = &quot;bobyqa&quot;,
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  pretraining=&quot;contr.sum&quot;))
+my_tab_model(pretrain_mod)</code></pre>
+<table style="border-collapse:collapse; border:none;">
+<tr>
+<th style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black; text-align:left; ">
+ 
+</th>
+<th colspan="4" style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black;">
+correct
+</th>
+</tr>
+<tr>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; text-align:left; ">
+Predictors
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+Log-Odds
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+CI
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+z
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+p &gt; |z|
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+(Intercept)
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+3.29
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+3.19 – 3.40
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+60.40
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+pretraining1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.54
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.44 – 1.65
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+28.72
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+trial z
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.27
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.21 – 1.33
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+40.62
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+pretraining1 × trial z
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.62
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.56 – 0.68
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+20.60
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+</table>
+</div>
 <div id="train-model" class="section level3">
 <h3>Train model</h3>
+<p>Learning-phase accuracy for the control and curriculum groups, by
+pretraining condition and stimulus type.</p>
 <pre class="r"><code>train_ctrl_mod = glmer(correct ~ pretraining * stimType * trial_z + (trial_z * stimType | subjectId), 
                   data = train_data_ctrl,
                   family = binomial,
@@ -393,7 +514,6 @@ learning_data_control_smrt$trial_z &lt;- scale_this(learning_data_control_smrt$t
                   contrasts = list(
                   pretraining=&quot;contr.sum&quot;, 
                   stimType=&quot;contr.sum&quot;))
-
 my_tab_model(train_ctrl_mod)</code></pre>
 <table style="border-collapse:collapse; border:none;">
 <tr>
@@ -736,7 +856,9 @@ stimType1 × trial z
 </div>
 <div id="test-model" class="section level3">
 <h3>Test model</h3>
-<pre class="r"><code>test_mod_trialwise = glmer(correct ~ curriculum * pretraining * stimType + (stimType | subjectId), 
+<p>Does the simple-to-complex curriculum benefit at test depend on
+pretraining condition and stimulus type?</p>
+<pre class="r"><code>test_mod = glmer(correct ~ curriculum * pretraining * stimType + (stimType | subjectId), 
                   data = test_data,
                   family = binomial,
                   control = glmerControl(
@@ -747,8 +869,7 @@ stimType1 × trial z
                   curriculum=&quot;contr.sum&quot;, 
                   pretraining=&quot;contr.sum&quot;, 
                   stimType=&quot;contr.sum&quot;))
-
-my_tab_model(test_mod_trialwise)</code></pre>
+my_tab_model(test_mod)</code></pre>
 <table style="border-collapse:collapse; border:none;">
 <tr>
 <th style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black; text-align:left; ">
@@ -797,13 +918,13 @@ p &gt; |z|
 curriculum1
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.56
+0.56
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.68 – -0.45
+0.45 – 0.68
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--9.70
+9.71
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>&lt;0.001</strong>
@@ -837,7 +958,7 @@ stimType1
 -0.50 – -0.30
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--7.74
+-7.75
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>&lt;0.001</strong>
@@ -848,13 +969,13 @@ stimType1
 curriculum1 × pretraining1
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.14
+0.14
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.25 – -0.03
+0.03 – 0.25
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--2.41
+2.41
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>0.016</strong>
@@ -865,13 +986,13 @@ curriculum1 × pretraining1
 curriculum1 × stimType1
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.11
+0.11
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.19 – -0.02
+0.02 – 0.19
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--2.49
+2.49
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>0.013</strong>
@@ -899,43 +1020,61 @@ pretraining1 × stimType1
 curriculum1 × pretraining1 × stimType1
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.10
+0.10
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.18 – -0.02
+0.02 – 0.18
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--2.33
+2.33
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>0.020</strong>
 </td>
 </tr>
 </table>
+<pre class="r"><code># STC benefit separately for rules and exceptions,
+# averaging across pretraining
+emm_stim &lt;- emmeans(
+  test_mod,
+  ~ curriculum | stimType,
+  weights = &quot;proportional&quot;
+)</code></pre>
+<pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
+<pre class="r"><code>stim_contrasts &lt;- contrast(
+  emm_stim,
+  method = list(
+    &quot;STC - No Curriculum&quot; = c(1, -1)
+  )
+)
+summary(stim_contrasts, infer = c(TRUE, TRUE))</code></pre>
+<pre><code>## stimType = Exception:
+##  contrast            estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
+##  STC - No Curriculum    1.349 0.170 Inf     1.015      1.68   7.933 &lt;0.0001
+## 
+## stimType = Rule:
+##  contrast            estimate    SE  df asymp.LCL asymp.UCL z.ratio p.value
+##  STC - No Curriculum    0.915 0.112 Inf     0.695      1.13   8.148 &lt;0.0001
+## 
+## Results are averaged over the levels of: pretraining 
+## Results are given on the log odds ratio (not the response) scale. 
+## Confidence level used: 0.95</code></pre>
 </div>
-<div id="test-model-smrt" class="section level3">
-<h3>Test model smrt</h3>
-<pre class="r"><code>cor(test_data_smrt$mean_sa_z, test_data_smrt$pretrain_acc_z)</code></pre>
-<pre><code>## [1] 0.108507</code></pre>
-<pre class="r"><code>test_smrt_mod = glmer(correct ~ curriculum * mean_sa_z * stimType + (stimType | subjectId), 
-                  data = test_data_smrt,
-                  family = binomial,
-                  control = glmerControl(
-                    optimizer = &quot;bobyqa&quot;,
-                    optCtrl = list(maxfun = 2e5)
-                  ),
-                  contrasts = list(
-                  curriculum=&quot;contr.sum&quot;,  
-                  stimType=&quot;contr.sum&quot;))
-
-my_tab_model(test_smrt_mod)</code></pre>
+<div id="pretraining-smrt" class="section level3">
+<h3>Pretraining smrt</h3>
+<p>Does selective attention to the relevant feature grow relative to the
+irrelevant features over the course of simple pretraining?</p>
+<pre class="r"><code>pretrain_smrt_mod &lt;- lm(selective_attention ~ feature * bin_z,
+                        data = pretrain_data_smrt,
+                        contrasts = list(feature = &quot;contr.sum&quot;))
+my_tab_model(pretrain_smrt_mod)</code></pre>
 <table style="border-collapse:collapse; border:none;">
 <tr>
 <th style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black; text-align:left; ">
  
 </th>
 <th colspan="4" style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black;">
-correct
+selective_attention
 </th>
 </tr>
 <tr>
@@ -943,7 +1082,7 @@ correct
 Predictors
 </td>
 <td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
-Log-Odds
+Estimates
 </td>
 <td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
 CI
@@ -960,30 +1099,13 @@ p &gt; |z|
 (Intercept)
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-1.93
+1.01
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-1.76 – 2.10
+1.00 – 1.01
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-21.91
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-<strong>&lt;0.001</strong>
-</td>
-</tr>
-<tr>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-curriculum1
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.71
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.87 – -0.55
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--8.69
+768.93
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>&lt;0.001</strong>
@@ -991,33 +1113,16 @@ curriculum1
 </tr>
 <tr>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-mean sa z
+feature [1]
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-0.10
+-0.02
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.07 – 0.27
+-0.02 – -0.01
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-1.18
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-0.237
-</td>
-</tr>
-<tr>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-stimType1
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.43
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.57 – -0.29
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--6.04
+-12.04
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 <strong>&lt;0.001</strong>
@@ -1025,76 +1130,44 @@ stimType1
 </tr>
 <tr>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-curriculum1 × mean sa z
+bin z
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.22
+0.00
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.39 – -0.05
+-0.00 – 0.00
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--2.60
+1.24
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-<strong>0.009</strong>
+0.214
 </td>
 </tr>
 <tr>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-curriculum1 × stimType1
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.22
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.34 – -0.10
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--3.52
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-<strong>&lt;0.001</strong>
-</td>
-</tr>
-<tr>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-mean sa z × stimType1
+feature [1] × bin z
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
 -0.00
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.13 – 0.12
+-0.01 – -0.00
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.06
+-3.73
 </td>
 <td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-0.955
-</td>
-</tr>
-<tr>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
-curriculum1 × mean sa z × stimType1
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.10
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--0.22 – 0.03
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
--1.55
-</td>
-<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
-0.121
+<strong>&lt;0.001</strong>
 </td>
 </tr>
 </table>
 </div>
 <div id="train-model-smrt" class="section level3">
 <h3>Train model smrt</h3>
+<p>Does selective attention (compression) during pretraining predict
+learning-phase accuracy, for curriculum vs. control participants?</p>
 <pre class="r"><code>train_curr_smrt_mod = glmer(correct ~ stimType * trial_z * mean_sa_z + (trial_z * stimType | subjectId), 
                   data = learning_data_curriculum_smrt,
                   family = binomial,
@@ -1542,6 +1615,203 @@ trial z × mean sa z
 ## optimizer (bobyqa) convergence code: 0 (OK)
 ## Model failed to converge with max|grad| = 0.00889614 (tol = 0.002, component 1)</code></pre>
 </div>
+<div id="test-model-smrt" class="section level3">
+<h3>Test model smrt</h3>
+<p>Does selective attention (compression) during pretraining predict who
+benefits most from the curriculum at test, controlling for pretraining
+accuracy?</p>
+<pre class="r"><code>test_smrt_mod = glmer(correct ~ curriculum * mean_sa_z * stimType + pretrain_acc_z + (stimType | subjectId),
+                  data = test_data_smrt,
+                  family = binomial,
+                  control = glmerControl(
+                    optimizer = &quot;bobyqa&quot;,
+                    optCtrl = list(maxfun = 2e5)
+                  ),
+                  contrasts = list(
+                  curriculum=&quot;contr.sum&quot;,
+                  stimType=&quot;contr.sum&quot;))
+
+my_tab_model(test_smrt_mod)</code></pre>
+<table style="border-collapse:collapse; border:none;">
+<tr>
+<th style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black; text-align:left; ">
+ 
+</th>
+<th colspan="4" style="border-top: double; text-align:center; font-style:italic; font-weight:normal; padding:0.2cm; border-bottom:1px solid black;">
+correct
+</th>
+</tr>
+<tr>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; text-align:left; ">
+Predictors
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+Log-Odds
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+CI
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+z
+</td>
+<td style=" text-align:center; border-bottom:1px solid; font-style:italic; font-weight:normal; border-bottom:1px solid black; ">
+p &gt; |z|
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+(Intercept)
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.91
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.75 – 2.08
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+22.68
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+curriculum1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.70
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.54 – 0.85
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+8.93
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+mean sa z
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.04
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-0.12 – 0.20
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.47
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.637
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+stimType1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-0.44
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-0.58 – -0.30
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-6.24
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+pretrain acc z
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.42
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.30 – 0.54
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+6.86
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>&lt;0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+curriculum1 × mean sa z
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.20
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.04 – 0.36
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+2.43
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>0.015</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+curriculum1 × stimType1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.22
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.09 – 0.34
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+3.48
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+<strong>0.001</strong>
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+mean sa z × stimType1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.00
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-0.12 – 0.12
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.00
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.997
+</td>
+</tr>
+<tr>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:left; ">
+curriculum1 × mean sa z × stimType1
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.10
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+-0.02 – 0.22
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+1.58
+</td>
+<td style=" padding:0.1cm;padding-left:0.2cm;padding-right:0.2cm; text-align:center;  ">
+0.114
+</td>
+</tr>
+</table>
 </div>
 
 
