@@ -45,7 +45,7 @@ def run_notebook():
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('mode', choices=['figures', 'model', 'sweep', 'all'])
+    ap.add_argument('mode', choices=['figures', 'model', 'sweep', 'controls', 'all'])
     ap.add_argument('--seeds', type=int, default=10, help='seeds for sweep_benefit')
     a = ap.parse_args()
     t0 = time.time()
@@ -53,6 +53,15 @@ def main():
     if a.mode in ('sweep', 'all'):
         for script, extra in (('reconstruct_sweep.py', []),
                               ('sweep_benefit.py', ['--seeds', str(a.seeds)])):
+            print(f'=== {script} ===', flush=True)
+            subprocess.run([sys.executable, os.path.join(HERE, script)] + extra,
+                           cwd=ROOT, check=True)
+
+    if a.mode in ('controls', 'all'):
+        # the two control simulations reported in the supplement, then their figures
+        for script, extra in (('consolidation_control.py', ['--seeds', '20']),
+                              ('lazy_vs_rich_exp2.py', ['--seeds', '3']),
+                              ('make_supp_figures.py', [])):
             print(f'=== {script} ===', flush=True)
             subprocess.run([sys.executable, os.path.join(HERE, script)] + extra,
                            cwd=ROOT, check=True)

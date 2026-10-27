@@ -644,7 +644,8 @@ def smrt(human_dir=HUMAN_DIR, pretraining='Simple', nbin=5, rule_feature=0):
 # interaction untouched, like everything else tried. Off by default -- it is a extra
 # fitted number, and the main model deliberately inherits Experiment 1 unchanged.
 YOKED_EXP2 = dict(hidden=32, lr=0.30, init=0.010, hnoise=1.0,
-                  alpha=0.0, lapse_pre=0.10, lapse_re=0.24, lr_re=None)
+                  alpha=0.0, lapse_pre=0.10, lapse_re=0.24, lr_re=None,
+                  freeze=False)
 
 
 def _phys8(entry):
@@ -735,10 +736,14 @@ def run_yoked_exp2(D2, cfg=None, seed=0, ndraw=400, probe_every=None):
     LR2 = LR if cfg.get('lr_re') is None else cfg['lr_re'] * LR
     g = torch.Generator(device=D2.dev).manual_seed(seed)
     rn = lambda *s: torch.randn(*s, generator=g, device=D2.dev)
-    W = (rn(D2.P, H, 3) * INIT).requires_grad_(True)
-    b = (rn(D2.P, H) * INIT).requires_grad_(True)
+    # `freeze` holds the hidden layer at its initialisation and trains the readout only:
+    # a fixed random-feature network, used as a lesion control (see lazy_vs_rich_exp2.py).
+    # Defaults to False, so nothing in the paper's pipeline changes.
+    FRZ = bool(cfg.get('freeze', False))
+    W = (rn(D2.P, H, 3) * INIT).requires_grad_(not FRZ)
+    b = (rn(D2.P, H) * INIT).requires_grad_(not FRZ)
     v = (rn(D2.P, H) * INIT).requires_grad_(True)
-    par = [W, b, v]
+    par = [v] if FRZ else [W, b, v]
     n0 = [p.detach().flatten(1).norm(dim=1).clone() for p in par]
 
     def code(PH):                 # (P, H, 8) hidden code for the eight LOGICAL stimuli

@@ -15,14 +15,15 @@ python run.py figures      # regenerate every figure and all reported statistics
 That takes a couple of minutes on a CPU. It reads the human data and the cached network
 outputs in `results/cache/`, and writes the figures plus `results/main_text_stats.{md,json}`.
 
-## The two ways to run
+## The ways to run
 
 | command | what it does | needs | time |
 |---|---|---|---|
 | `python run.py figures` | replay: figures and statistics from cached network outputs | CPU | ~1.5 min |
 | `python run.py model` | recompute: retrain the yoked networks, rewrite the caches, then replay | GPU | ~1.5 min |
 | `python run.py sweep` | the two hyperparameter sweeps | GPU | ~25 min |
-| `python run.py all` | sweep, then model, then figures | GPU | ~30 min |
+| `python run.py controls` | the two supplementary control simulations and their figures | GPU | ~3 min |
+| `python run.py all` | sweep, controls, model, then figures | GPU | ~30 min |
 
 `figures` is the normal path. `model` exists so the caches can be checked rather than
 trusted: it deletes `results/cache/*.npz`, retrains both yoked models from scratch, and
@@ -44,6 +45,11 @@ analysis/
   run.py                  entry point for the commands above
   reconstruct_sweep.py    the Exp 1 hyperparameter sweep (fit to human curves)
   sweep_benefit.py        the curriculum benefit across that grid (Figure 3e, f)
+  consolidation_control.py  Exp 1 washout control: an identical balanced block before
+                          test, so no condition ends on its own statistics (Figure S1)
+  lazy_vs_rich_exp2.py    Exp 2 lesion control: the same model with the hidden layer
+                          frozen, so the representation cannot compress (Figure S2)
+  make_supp_figures.py    draws Figures S1 and S2 from the frozen CSVs
   experiment1_stats.Rmd   human trial-level mixed models, Experiment 1
   experiment2_stats.Rmd   human trial-level mixed models, Experiment 2
 data/                     the five human CSVs the pipeline reads (Git LFS)
@@ -52,6 +58,10 @@ results/
                           provenance, and the values as fields (b, ci_lo, ci_hi, z, p, n)
   cache/*.npz             cached network outputs (see above)
   sweep_exp1*.csv         sweep results
+  consolidation*.csv      Exp 1 washout control: per-seed means, per-network cell means,
+                          and the mixed-model contrasts Figure S1 plots
+  lazy_vs_rich_exp2*.csv  Exp 2 lesion control: contrasts, cell means, and the
+                          participation ratio after pretraining
   permutation_cache.npz   the human-network correspondence permutation test
 figures/                  the figures, svg and png
 task/                     the experiment code participants ran
@@ -99,6 +109,35 @@ Statistics quoted in the paper as log-odds come from these models. Statistics qu
 differences in accuracy come from the networks, via `main_text_stats.json`. The two are on
 different scales and are not directly comparable in magnitude.
 
+## Supplementary controls
+
+Two control simulations answer the two questions the network account most invites, and are
+reported in the supplement rather than the main results. Both run from `python run.py
+controls`; both write their numbers to `results/` and their figures to `figures/`.
+
+**Is the curriculum effect just recency?** The final training block differs across conditions
+in how many exceptions it contains (50% under simple-to-complex, 25% under no curriculum, 0%
+under complex-to-simple), so the ordering at test could reflect recent exposure rather than
+anything durable. `consolidation_control.py` appends an identical balanced block of 48 trials
+to every network regardless of condition, so all three end on the same local statistics, and
+tests after it. The simple-to-complex exception benefit survives (+0.040 [0.032, 0.048]
+against +0.063 [0.053, 0.073] without the washout); the complex-to-simple exception cost and
+the simple-to-complex rule cost do not (Figure S1). The curriculum *costs* are recency; the
+exception benefit is not.
+
+**Does the Experiment 2 interaction need the representation?** `lazy_vs_rich_exp2.py` repeats
+Experiment 2 with the hidden layer frozen at initialisation and only the readout trained — a
+fixed random-feature network, which still carries prior learning across the phase boundary in
+its readout but whose participation ratio cannot change. It shows a large curriculum benefit,
+larger than the trained model's, but the same benefit after one-dimensional and XOR
+pretraining, and no three-way interaction (-0.004 [-0.031, +0.022] against +0.047 [0.031,
+0.062]; Figure S2). The pretraining prediction requires a representation that prior learning
+can compress.
+
+Both average accuracy across simulation seeds before fitting, since the seed is a property of
+the simulation and not of the data. `paper_lib.run_yoked_exp2` takes a `freeze` flag for the
+second control; it defaults to `False`, so the main pipeline is unchanged.
+
 ## Data
 
 The pipeline reads five files from `data/`:
@@ -114,11 +153,12 @@ Set `SIMPLICITY_DATA=/path/to/data` to read them from elsewhere.
 ## Reproducing from scratch
 
 ```bash
-python run.py all          # sweeps, retrain, figures, statistics
+python run.py all          # sweeps, controls, retrain, figures, statistics
 ```
 
-This regenerates everything including the hyperparameter sweeps, which are otherwise
-read from `results/sweep_exp1*.csv`.
+This regenerates everything, including the hyperparameter sweeps (otherwise read from
+`results/sweep_exp1*.csv`) and the two supplementary controls (otherwise read from
+`results/consolidation*.csv` and `results/lazy_vs_rich_exp2*.csv`).
 
 ## Notes
 
@@ -130,4 +170,5 @@ read from `results/sweep_exp1*.csv`.
   docstrings in `paper_lib.py` for where the noise enters, which quantities marginalise it
   and which do not, why trials are binned by presented trial number, and why the test
   models use a random slope. `reconstruct_sweep.py` explains why the initialisation scale
-  is fixed rather than fitted.
+  is fixed rather than fitted, and `consolidation_control.py` and `lazy_vs_rich_exp2.py`
+  each open by stating the objection they are answering.
